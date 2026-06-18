@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="팀톡">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>팀톡 — 업무용 메신저</title>
+<style>
+:root{
+  --bg:#0b1220; --panel:#121a2b; --panel2:#1a2540; --line:#243150;
+  --text:#e8edf7; --muted:#8a98b8; --accent:#3b82f6; --accent2:#2563eb;
+  --mine:#2563eb; --theirs:#1f2a44; --ok:#22c55e; --danger:#ef4444;
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  background:var(--bg);color:var(--text);font-size:15px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+input,textarea{font-family:inherit;font-size:16px}
+.hidden{display:none!important}
+#app{display:flex;flex-direction:column;height:100%}
+
+/* ===== 상단바 ===== */
+.topbar{display:flex;align-items:center;gap:10px;padding:calc(10px + var(--safe-t)) 14px 10px;
+  background:var(--panel);border-bottom:1px solid var(--line);min-height:52px}
+.topbar .title{font-weight:700;font-size:17px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar .sub{font-size:12px;color:var(--muted);font-weight:400}
+.iconbtn{background:transparent;border:none;color:var(--text);font-size:20px;width:38px;height:38px;
+  border-radius:10px;display:flex;align-items:center;justify-content:center}
+.iconbtn:active{background:var(--panel2)}
+.backbtn{font-size:24px}
+
+/* ===== 리스트(채팅방 목록) ===== */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.room{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line)}
+.room:active{background:var(--panel)}
+.avatar{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0;color:#fff;position:relative}
+.avatar.group{background:linear-gradient(135deg,#10b981,#0891b2)}
+.room-mid{flex:1;min-width:0}
+.room-name{font-weight:600;display:flex;align-items:center;gap:6px}
+.room-last{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:3px}
+.room-right{text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.room-time{font-size:11px;color:var(--muted)}
+.badge{background:var(--danger);color:#fff;font-size:11px;font-weight:700;min-width:19px;height:19px;
+  border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 6px}
+.empty{text-align:center;color:var(--muted);padding:60px 30px;line-height:1.7}
+
+/* ===== 채팅 화면 ===== */
+.msgs{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 12px;display:flex;flex-direction:column;gap:3px}
+.daysep{align-self:center;background:var(--panel2);color:var(--muted);font-size:12px;padding:4px 12px;border-radius:12px;margin:10px 0}
+.msg{max-width:78%;display:flex;flex-direction:column;margin-top:8px}
+.msg.mine{align-self:flex-end;align-items:flex-end}
+.msg.theirs{align-self:flex-start;align-items:flex-start}
+.msg .who{font-size:12px;color:var(--muted);margin:0 6px 3px}
+.bubble{padding:9px 13px;border-radius:16px;line-height:1.45;word-break:break-word;white-space:pre-wrap;position:relative}
+.mine .bubble{background:var(--mine);color:#fff;border-bottom-right-radius:5px}
+.theirs .bubble{background:var(--theirs);color:var(--text);border-bottom-left-radius:5px}
+.bubble.media{padding:4px}
+.bubble img{max-width:220px;border-radius:12px;display:block}
+.bubble audio{width:220px}
+.filechip{display:flex;align-items:center;gap:10px;padding:6px 10px;min-width:170px}
+.filechip .fi{font-size:26px}
+.filechip .fn{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.filechip .fs{font-size:11px;opacity:.8}
+.meta{font-size:10px;color:var(--muted);margin:3px 6px 0;display:flex;gap:6px;align-items:center}
+.mine .meta{flex-direction:row-reverse}
+.read{color:var(--accent);font-weight:600}
+
+/* ===== 입력바 ===== */
+.inputbar{display:flex;align-items:flex-end;gap:8px;padding:8px 10px calc(8px + var(--safe-b));
+  background:var(--panel);border-top:1px solid var(--line)}
+.inputbar textarea{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+  border-radius:20px;padding:10px 14px;resize:none;max-height:110px;line-height:1.4;outline:none}
+.inputbar textarea:focus{border-color:var(--accent)}
+.sendbtn{width:42px;height:42px;border-radius:50%;background:var(--accent);border:none;color:#fff;
+  font-size:19px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.sendbtn:disabled{opacity:.4}
+.recbtn.rec{background:var(--danger);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.5}}
+
+/* ===== FAB ===== */
+.fab{position:absolute;right:18px;bottom:calc(22px + var(--safe-b));width:56px;height:56px;border-radius:50%;
+  background:var(--accent);border:none;color:#fff;font-size:26px;box-shadow:0 6px 20px rgba(59,130,246,.5);z-index:20}
+
+/* ===== 오버레이/시트 ===== */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.overlay.on{display:flex}
+.sheet{background:var(--panel);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:18px 18px calc(18px + var(--safe-b));
+  max-height:86vh;overflow-y:auto;animation:slideup .25s}
+@keyframes slideup{from{transform:translateY(100%)}}
+.sheet h3{margin:2px 0 14px;font-size:18px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.field input,.field textarea,.field select{width:100%;background:var(--panel2);border:1px solid var(--line);
+  color:var(--text);border-radius:11px;padding:11px 13px;outline:none}
+.field input:focus,.field textarea:focus{border-color:var(--accent)}
+.btn{width:100%;background:var(--accent);border:none;color:#fff;font-weight:700;font-size:16px;
+  border-radius:13px;padding:14px;margin-top:6px}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.btn.danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+.btn:active{opacity:.85}
+.userpick{display:flex;align-items:center;gap:12px;padding:11px 6px;border-bottom:1px solid var(--line)}
+.userpick .avatar{width:40px;height:40px;border-radius:12px;font-size:16px}
+.userpick .nm{flex:1;font-weight:600}
+.userpick .ck{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px}
+.userpick.sel .ck{background:var(--accent);border-color:var(--accent)}
+
+/* ===== 로그인 ===== */
+#authScreen{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:30px;text-align:center}
+#authScreen .logo{font-size:54px;margin-bottom:8px}
+#authScreen h1{font-size:24px;margin:0 0 4px}
+#authScreen p{color:var(--muted);margin:0 0 26px}
+#authBox{width:100%;max-width:340px}
+#authBox .field{text-align:left}
+.linkbtn{background:none;border:none;color:var(--accent);font-size:14px;margin-top:14px}
+.authmsg{color:var(--danger);font-size:13px;min-height:18px;margin-top:8px}
+
+/* ===== 잠금 ===== */
+#lockScreen{position:fixed;inset:0;background:var(--bg);z-index:300;display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;padding:30px}
+#lockScreen .lk{font-size:48px}
+#lockInput{width:200px;text-align:center;font-size:24px;letter-spacing:8px;background:var(--panel2);
+  border:1px solid var(--line);color:var(--text);border-radius:12px;padding:12px}
+#lockMsg{color:var(--danger);font-size:13px;min-height:18px}
+
+/* ===== 토스트 / 뷰어 ===== */
+#toast{position:fixed;left:50%;bottom:calc(90px + var(--safe-b));transform:translateX(-50%);
+  background:#000d;color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;z-index:400;opacity:0;
+  transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
+#toast.on{opacity:1}
+#imgViewer{position:fixed;inset:0;background:#000e;z-index:350;display:none;align-items:center;justify-content:center}
+#imgViewer img{max-width:96%;max-height:90%;border-radius:8px}
+.upbar{position:absolute;left:0;right:0;top:0;height:3px;background:var(--accent2);transform-origin:left;transform:scaleX(0);transition:transform .2s}
+.menu-item{display:flex;align-items:center;gap:12px;padding:14px 6px;border-bottom:1px solid var(--line);font-size:15px}
+.menu-item:active{opacity:.6}
+.menu-item .ic{font-size:20px;width:26px;text-align:center}
+.typing{font-size:12px;color:var(--accent);padding:0 16px 6px}
+/* 문서 뷰어 */
+#docViewer{position:fixed;inset:0;background:#0b1220;z-index:360;display:none;flex-direction:column}
+.doc-top{display:flex;align-items:center;gap:8px;padding:calc(8px + var(--safe-t)) 8px 8px;background:#000;border-bottom:1px solid var(--line)}
+.doc-body{flex:1;position:relative;background:#fff}
+.doc-body iframe{position:absolute;inset:0;width:100%;height:100%;border:none;background:#fff}
+.doc-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#888;font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- 로그인 -->
+<div id="authScreen">
+  <div class="logo">💬</div>
+  <h1>팀톡</h1>
+  <p>우리 팀 전용 메신저</p>
+  <div id="authBox">
+    <div class="field" id="nameField" style="display:none"><label>이름</label><input id="aName" placeholder="홍길동" autocomplete="name"></div>
+    <div class="field"><label>이메일</label><input id="aEmail" type="email" placeholder="you@company.com" autocomplete="username"></div>
+    <div class="field"><label>비밀번호</label><input id="aPass" type="password" placeholder="6자 이상" autocomplete="current-password"></div>
+    <button class="btn" id="authBtn">로그인</button>
+    <button class="linkbtn" id="authToggle">계정이 없으신가요? 가입하기</button>
+    <div class="authmsg" id="authMsg"></div>
+  </div>
+  <button class="linkbtn" id="cfgBtn" style="position:absolute;bottom:calc(20px + var(--safe-b));color:var(--muted)">⚙️ 서버 설정</button>
+</div>
+
+<!-- 잠금 -->
+<div id="lockScreen">
+  <div class="lk">🔒</div>
+  <input id="lockInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••">
+  <button class="btn" id="lockBtn" style="width:200px">잠금 해제</button>
+  <button class="btn ghost" id="lockBioBtn" style="width:200px;display:none">🙂 Face ID / 지문</button>
+  <div id="lockMsg"></div>
+</div>
+
+<!-- 메인 -->
+<div id="app" class="hidden">
+  <!-- 목록 화면 -->
+  <div id="listView" style="display:flex;flex-direction:column;height:100%">
+    <div class="topbar">
+      <div class="title">팀톡 <span class="sub" id="meLabel"></span></div>
+      <button class="iconbtn" id="menuBtn">⋮</button>
+    </div>
+    <div class="scroll" id="roomList"></div>
+    <button class="fab" id="newChatBtn">✏️</button>
+  </div>
+
+  <!-- 채팅 화면 -->
+  <div id="chatView" style="display:none;flex-direction:column;height:100%">
+    <div class="topbar">
+      <button class="iconbtn backbtn" id="chatBack">‹</button>
+      <div class="avatar" id="chatAv" style="width:38px;height:38px;border-radius:11px;font-size:15px">?</div>
+      <div class="title" style="flex:1">
+        <div id="chatTitle">채팅</div>
+        <div class="sub" id="chatSub"></div>
+      </div>
+      <button class="iconbtn" id="chatInfo">ⓘ</button>
+    </div>
+    <div class="msgs" id="msgList"></div>
+    <div class="typing hidden" id="typingInd"></div>
+    <div class="inputbar">
+      <button class="iconbtn" id="attachBtn">＋</button>
+      <button class="iconbtn recbtn" id="recBtn">🎙</button>
+      <textarea id="msgInput" rows="1" placeholder="메시지 입력…"></textarea>
+      <button class="sendbtn" id="sendBtn" disabled>➤</button>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none">
+    <input type="file" id="anyFileInput" style="display:none">
+    <div class="upbar" id="upbar"></div>
+  </div>
+</div>
+
+<!-- 새 대화 시트 -->
+<div class="overlay" id="newSheet">
+  <div class="sheet">
+    <h3>새 대화</h3>
+    <div class="field"><input id="grpName" placeholder="그룹 이름 (그룹 만들 때만)"></div>
+    <p style="color:var(--muted);font-size:13px;margin:0 0 6px">대화 상대를 선택하세요 (여러 명 = 그룹)</p>
+    <div id="userPickList"></div>
+    <button class="btn" id="createChatBtn">대화 시작</button>
+  </div>
+</div>
+
+<!-- 메뉴 시트 -->
+<div class="overlay" id="menuSheet">
+  <div class="sheet">
+    <h3 id="menuTitle">메뉴</h3>
+    <div class="menu-item" id="mLock"><span class="ic">🔒</span><span id="mLockLabel">앱 잠금 설정</span></div>
+    <div class="menu-item" id="mNotify"><span class="ic">🔔</span><span id="mNotifyLabel">알림 켜기</span></div>
+    <div class="menu-item" id="mProfile"><span class="ic">✏️</span>이름 변경</div>
+    <div class="menu-item" id="mLogout"><span class="ic">🚪</span>로그아웃</div>
+    <div class="menu-item" id="mVer" style="color:var(--muted);font-size:13px;border:none"><span class="ic">ℹ️</span><span id="verLabel"></span></div>
+  </div>
+</div>
+
+<!-- 정보 시트 -->
+<div class="overlay" id="infoSheet">
+  <div class="sheet">
+    <h3 id="infoTitle">대화 정보</h3>
+    <div id="infoMembers"></div>
+    <button class="btn ghost" id="addMemberBtn" style="margin-top:10px;display:none">＋ 멤버 추가</button>
+    <button class="btn danger" id="leaveBtn" style="margin-top:10px">대화 나가기</button>
+  </div>
+</div>
+
+<!-- 첨부 시트 -->
+<div class="overlay" id="attachSheet">
+  <div class="sheet">
+    <h3>첨부</h3>
+    <div class="menu-item" id="atPhoto"><span class="ic">🖼</span>사진</div>
+    <div class="menu-item" id="atFile"><span class="ic">📎</span>파일</div>
+  </div>
+</div>
+
+<!-- 서버 설정 시트 (로그인 화면 위에 떠야 하므로 z-index 상향) -->
+<div class="overlay" id="cfgSheet" style="z-index:250">
+  <div class="sheet">
+    <h3>Firebase 서버 설정</h3>
+    <p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 10px">
+      Firebase 콘솔 → 프로젝트 설정 → 내 앱 → SDK 설정의 <b>firebaseConfig</b> 객체를 통째로 붙여넣으세요.</p>
+    <div class="field"><textarea id="cfgInput" rows="9" placeholder='{ "apiKey": "…", "authDomain": "…", "projectId": "…", "storageBucket": "…", "messagingSenderId": "…", "appId": "…" }'></textarea></div>
+    <div class="field"><label>VAPID 키 (푸시용, 선택)</label><input id="cfgVapid" placeholder="B...(클라우드 메시징 웹 인증서)"></div>
+    <button class="btn" id="cfgSave">저장하고 적용</button>
+  </div>
+</div>
+
+<div id="imgViewer"><img id="imgViewerImg" src=""></div>
+
+<!-- 문서 뷰어 -->
+<div id="docViewer">
+  <div class="doc-top">
+    <button class="iconbtn" id="docClose" style="color:#fff">✕</button>
+    <div class="title" id="docTitle" style="flex:1;color:#fff;font-size:15px">문서</div>
+    <button class="iconbtn" id="docOpenExt" title="외부에서 열기" style="color:#fff">⤴</button>
+  </div>
+  <div class="doc-body"><div class="doc-load">문서를 불러오는 중…</div><iframe id="docFrame" src="about:blank"></iframe></div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+/* ============================================================
+   팀톡 — 업무용 메신저 (Firebase)
+   ============================================================ */
+const APP_VER = "1.0.0";
+
+/* ---------- Firebase 설정 (사장님이 서버설정에서 입력 → localStorage) ---------- */
+const EMBEDDED_CONFIG = null; // 배포 시 여기에 firebaseConfig 객체를 넣으면 입력 불필요
+const EMBEDDED_VAPID = "";
+
+function loadCfg(){
+  try{ return JSON.parse(localStorage.getItem("fb.cfg")||"null") || EMBEDDED_CONFIG; }
+  catch(e){ return EMBEDDED_CONFIG; }
+}
+function getVapid(){ return localStorage.getItem("fb.vapid") || EMBEDDED_VAPID; }
+
+const CFG = loadCfg();
+
+/* ---------- Firebase SDK 동적 로드 ---------- */
+let fb = {}; // {app,auth,db,storage,msg}
+const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
+let M = {}; // 모듈 함수 모음
+
+async function initFirebase(){
+  const appMod = await import(SDK+"firebase-app.js");
+  const authMod = await import(SDK+"firebase-auth.js");
+  const dbMod = await import(SDK+"firebase-firestore.js");
+  const stMod = await import(SDK+"firebase-storage.js");
+  M = {...appMod,...authMod,...dbMod,...stMod};
+  fb.app = M.initializeApp(CFG);
+  fb.auth = M.getAuth(fb.app);
+  fb.db = M.getFirestore(fb.app);
+  fb.storage = M.getStorage(fb.app);
+  await M.setPersistence(fb.auth, M.browserLocalPersistence).catch(()=>{});
+}
+
+/* ============================================================
+   상태
+   ============================================================ */
+let me = null;            // {uid,name,email}
+let allUsers = [];        // 전체 사용자
+let rooms = [];           // 내 채팅방
+let curRoom = null;       // 현재 열린 방
+let unsubRooms = null, unsubMsgs = null, unsubUsers = null;
+let pickSel = new Set();  // 새 대화 선택
+let curMsgs = [];
+
+const $ = id => document.getElementById(id);
+function toast(t){const e=$("toast");e.textContent=t;e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),2200);}
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function initials(n){return (n||"?").trim().slice(0,2);}
+function fmtTime(ts){if(!ts)return"";const d=ts.toDate?ts.toDate():new Date(ts);let h=d.getHours(),m=d.getMinutes();const ap=h<12?"오전":"오후";h=h%12||12;return `${ap} ${h}:${String(m).padStart(2,"0")}`;}
+function fmtDay(ts){const d=ts.toDate?ts.toDate():new Date(ts);const w=["일","월","화","수","목","금","토"][d.getDay()];return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} (${w})`;}
+function fmtRoomTime(ts){if(!ts)return"";const d=ts.toDate?ts.toDate():new Date(ts);const now=new Date();if(d.toDateString()===now.toDateString())return fmtTime(ts);return `${d.getMonth()+1}/${d.getDate()}`;}
+function fmtSize(b){if(!b)return"";if(b<1024)return b+"B";if(b<1048576)return (b/1024).toFixed(0)+"KB";return (b/1048576).toFixed(1)+"MB";}
+
+/* ============================================================
+   인증
+   ============================================================ */
+let authMode = "login";
+function renderAuthMode(){
+  $("nameField").style.display = authMode==="signup"?"block":"none";
+  $("authBtn").textContent = authMode==="signup"?"가입하기":"로그인";
+  $("authToggle").textContent = authMode==="signup"?"이미 계정이 있으신가요? 로그인":"계정이 없으신가요? 가입하기";
+  $("authMsg").textContent="";
+}
+$("authToggle").onclick=()=>{authMode=authMode==="signup"?"login":"signup";renderAuthMode();};
+
+async function doAuth(){
+  const email=$("aEmail").value.trim(), pass=$("aPass").value, name=$("aName").value.trim();
+  if(!email||!pass){$("authMsg").textContent="이메일과 비밀번호를 입력하세요";return;}
+  if(authMode==="signup"&&!name){$("authMsg").textContent="이름을 입력하세요";return;}
+  $("authBtn").disabled=true;$("authMsg").textContent="처리 중…";$("authMsg").style.color="var(--muted)";
+  try{
+    if(authMode==="signup"){
+      const cred=await M.createUserWithEmailAndPassword(fb.auth,email,pass);
+      await M.updateProfile(cred.user,{displayName:name});
+      await M.setDoc(M.doc(fb.db,"users",cred.user.uid),{
+        name, email, createdAt:M.serverTimestamp(), lastSeen:M.serverTimestamp()
+      });
+    }else{
+      await M.signInWithEmailAndPassword(fb.auth,email,pass);
+    }
+  }catch(e){
+    $("authMsg").style.color="var(--danger)";
+    $("authMsg").textContent=authErr(e.code)||e.message;
+    $("authBtn").disabled=false;
+  }
+}
+function authErr(c){return {
+  "auth/invalid-email":"이메일 형식이 올바르지 않습니다",
+  "auth/user-not-found":"등록되지 않은 계정입니다",
+  "auth/wrong-password":"비밀번호가 틀렸습니다",
+  "auth/invalid-credential":"이메일 또는 비밀번호가 틀렸습니다",
+  "auth/email-already-in-use":"이미 가입된 이메일입니다",
+  "auth/weak-password":"비밀번호는 6자 이상이어야 합니다",
+}[c];}
+$("authBtn").onclick=doAuth;
+$("aPass").addEventListener("keydown",e=>{if(e.key==="Enter")doAuth();});
+
+async function onLogin(user){
+  me={uid:user.uid,name:user.displayName||"나",email:user.email};
+  // 사용자 문서 보장
+  const uref=M.doc(fb.db,"users",me.uid);
+  const snap=await M.getDoc(uref);
+  if(!snap.exists()) await M.setDoc(uref,{name:me.name,email:me.email,createdAt:M.serverTimestamp(),lastSeen:M.serverTimestamp()});
+  else { me.name=snap.data().name||me.name; await M.updateDoc(uref,{lastSeen:M.serverTimestamp()}); }
+  $("authScreen").style.display="none";
+  $("app").classList.remove("hidden");
+  $("meLabel").textContent="· "+me.name;
+  if(lockIsOn()) showLock();
+  watchUsers();
+  watchRooms();
+  registerPush();
+  renderNotifUI();renderLockUI();
+  $("verLabel").textContent="팀톡 v"+APP_VER;
+}
+
+/* ============================================================
+   사용자 / 채팅방 구독
+   ============================================================ */
+function watchUsers(){
+  if(unsubUsers)unsubUsers();
+  unsubUsers=M.onSnapshot(M.collection(fb.db,"users"),snap=>{
+    allUsers=snap.docs.map(d=>({uid:d.id,...d.data()}));
+  });
+}
+function watchRooms(){
+  if(unsubRooms)unsubRooms();
+  const q=M.query(M.collection(fb.db,"rooms"),M.where("members","array-contains",me.uid));
+  unsubRooms=M.onSnapshot(q,snap=>{
+    rooms=snap.docs.map(d=>({id:d.id,...d.data()}));
+    rooms.sort((a,b)=>(b.lastTime?.toMillis?.()||0)-(a.lastTime?.toMillis?.()||0));
+    renderRooms();
+    if(curRoom){const r=rooms.find(x=>x.id===curRoom.id);if(r){curRoom=r;renderChatHeader();}}
+  });
+}
+
+function renderRooms(){
+  const el=$("roomList");
+  if(!rooms.length){el.innerHTML='<div class="empty">아직 대화가 없어요.<br>오른쪽 아래 ✏️ 버튼으로<br>새 대화를 시작하세요.</div>';return;}
+  el.innerHTML=rooms.map(r=>{
+    const title=roomTitle(r);
+    const unread=(r.unread&&r.unread[me.uid])||0;
+    const isGrp=r.type==="group";
+    return `<div class="room" data-id="${r.id}">
+      <div class="avatar ${isGrp?'group':''}">${isGrp?'👥':esc(initials(title))}</div>
+      <div class="room-mid">
+        <div class="room-name">${esc(title)}${isGrp?` <span style="color:var(--muted);font-size:12px;font-weight:400">${r.members.length}</span>`:''}</div>
+        <div class="room-last">${esc(r.lastText||"대화를 시작하세요")}</div>
+      </div>
+      <div class="room-right">
+        <div class="room-time">${fmtRoomTime(r.lastTime)}</div>
+        ${unread>0?`<div class="badge">${unread>99?'99+':unread}</div>`:''}
+      </div>
+    </div>`;
+  }).join("");
+  el.querySelectorAll(".room").forEach(d=>d.onclick=()=>openRoom(d.dataset.id));
+  updateAppBadge();
+}
+function roomTitle(r){
+  if(r.type==="group")return r.name||"그룹";
+  const other=r.members.find(u=>u!==me.uid);
+  return (r.memberNames&&r.memberNames[other])||"대화";
+}
+function totalUnread(){return rooms.reduce((s,r)=>s+((r.unread&&r.unread[me.uid])||0),0);}
+function updateAppBadge(){const n=totalUnread();try{if(navigator.setAppBadge){n?navigator.setAppBadge(n):navigator.clearAppBadge();}}catch(e){}}
+
+/* ============================================================
+   채팅방 열기 / 메시지
+   ============================================================ */
+async function openRoom(id){
+  const r=rooms.find(x=>x.id===id);if(!r)return;
+  curRoom=r;
+  $("listView").style.display="none";
+  $("chatView").style.display="flex";
+  renderChatHeader();
+  $("msgList").innerHTML='<div class="empty">불러오는 중…</div>';
+  if(unsubMsgs)unsubMsgs();
+  const q=M.query(M.collection(fb.db,"rooms",id,"messages"),M.orderBy("ts","asc"),M.limitToLast(200));
+  unsubMsgs=M.onSnapshot(q,snap=>{
+    curMsgs=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderMsgs();
+    markRead();
+  });
+}
+function renderChatHeader(){
+  const r=curRoom;const t=roomTitle(r);const isGrp=r.type==="group";
+  $("chatTitle").textContent=t;
+  $("chatAv").textContent=isGrp?"👥":initials(t);
+  $("chatAv").className="avatar "+(isGrp?"group":"");
+  $("chatAv").style.cssText="width:38px;height:38px;border-radius:11px;font-size:15px";
+  $("chatSub").textContent=isGrp?`멤버 ${r.members.length}명`:"";
+}
+function renderMsgs(){
+  const el=$("msgList");
+  const atBottom=el.scrollHeight-el.scrollTop-el.clientHeight<120;
+  let html="",lastDay="";
+  curMsgs.forEach(m=>{
+    const day=m.ts?fmtDay(m.ts):"";
+    if(day&&day!==lastDay){html+=`<div class="daysep">${day}</div>`;lastDay=day;}
+    const mine=m.sender===me.uid;
+    const readByOthers=curRoom.members.filter(u=>u!==me.uid&&(m.readBy||[]).includes(u)).length;
+    const totalOthers=curRoom.members.length-1;
+    let readMark="";
+    if(mine){
+      if(curRoom.type==="group") readMark=readByOthers>=totalOthers?'<span class="read">읽음</span>':(readByOthers>0?`<span class="read">${readByOthers}</span>`:'');
+      else readMark=readByOthers>0?'<span class="read">읽음</span>':'';
+    }
+    let body="";
+    if(m.type==="image") body=`<div class="bubble media"><img src="${esc(m.url)}" data-full="${esc(m.url)}" loading="lazy"></div>`;
+    else if(m.type==="voice") body=`<div class="bubble media"><audio controls preload="none" src="${esc(m.url)}"></audio></div>`;
+    else if(m.type==="file") body=`<div class="bubble media filemsg" data-url="${esc(m.url)}" data-name="${esc(m.fileName||"파일")}"><div class="filechip"><span class="fi">${fileIcon(m.fileName)}</span><div style="min-width:0"><div class="fn">${esc(m.fileName||"파일")}</div><div class="fs">${fmtSize(m.fileSize)} · 눌러서 보기</div></div></div></div>`;
+    else body=`<div class="bubble">${esc(m.text)}</div>`;
+    html+=`<div class="msg ${mine?'mine':'theirs'}">
+      ${(!mine&&curRoom.type==="group")?`<div class="who">${esc(m.senderName||'')}</div>`:''}
+      ${body}
+      <div class="meta">${readMark}<span>${fmtTime(m.ts)}</span></div>
+    </div>`;
+  });
+  el.innerHTML=html||'<div class="empty">첫 메시지를 보내보세요 👋</div>';
+  el.querySelectorAll("img[data-full]").forEach(img=>img.onclick=()=>{$("imgViewerImg").src=img.dataset.full;$("imgViewer").style.display="flex";});
+  el.querySelectorAll(".filemsg").forEach(d=>d.onclick=()=>openFile(d.dataset.url,d.dataset.name));
+  if(atBottom||true) el.scrollTop=el.scrollHeight;
+}
+$("imgViewer").onclick=()=>$("imgViewer").style.display="none";
+
+/* ---------- 문서 뷰어 (PDF / Word / Excel / PPT) ---------- */
+function fileExt(name){const m=/\.([a-z0-9]+)$/i.exec(name||"");return m?m[1].toLowerCase():"";}
+function fileIcon(name){const e=fileExt(name);
+  if(e==="pdf")return "📕";
+  if(["doc","docx"].includes(e))return "📘";
+  if(["xls","xlsx","csv"].includes(e))return "📗";
+  if(["ppt","pptx"].includes(e))return "📙";
+  if(["zip","rar","7z"].includes(e))return "🗜";
+  if(["mp4","mov","avi","mkv"].includes(e))return "🎬";
+  if(["mp3","wav","m4a"].includes(e))return "🎵";
+  return "📄";}
+function openFile(url,name){
+  const e=fileExt(name);
+  const office=["doc","docx","xls","xlsx","ppt","pptx"];
+  let viewer="";
+  if(e==="pdf"){
+    // 모바일 인앱은 구글 뷰어가 가장 호환성 좋음
+    viewer=isMobile()?`https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(url)}`:url;
+  }else if(office.includes(e)){
+    viewer=`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
+  }else{
+    // 미리보기 불가 → 새 탭에서 다운로드
+    window.open(url,"_blank","noopener");return;
+  }
+  $("docTitle").textContent=name||"문서";
+  $("docFrame").src=viewer;
+  $("docOpenExt").onclick=()=>window.open(url,"_blank","noopener");
+  $("docViewer").style.display="flex";
+}
+$("docClose").onclick=()=>{$("docViewer").style.display="none";$("docFrame").src="about:blank";};
+
+async function markRead(){
+  if(!curRoom)return;
+  const unread=(curRoom.unread&&curRoom.unread[me.uid])||0;
+  // 안읽은 메시지 readBy 갱신
+  const toMark=curMsgs.filter(m=>m.sender!==me.uid&&!(m.readBy||[]).includes(me.uid));
+  const ups={};ups[`unread.${me.uid}`]=0;
+  try{ await M.updateDoc(M.doc(fb.db,"rooms",curRoom.id),ups); }catch(e){}
+  for(const m of toMark.slice(-30)){
+    try{ await M.updateDoc(M.doc(fb.db,"rooms",curRoom.id,"messages",m.id),{readBy:M.arrayUnion(me.uid)}); }catch(e){}
+  }
+}
+
+/* ---------- 메시지 전송 ---------- */
+async function sendText(){
+  const t=$("msgInput").value.trim();if(!t||!curRoom)return;
+  $("msgInput").value="";autoGrow();$("sendBtn").disabled=true;
+  await pushMessage({type:"text",text:t});
+}
+async function pushMessage(data){
+  const r=curRoom;if(!r)return;
+  const msg={sender:me.uid,senderName:me.name,ts:M.serverTimestamp(),readBy:[me.uid],...data};
+  try{
+    await M.addDoc(M.collection(fb.db,"rooms",r.id,"messages"),msg);
+    const preview=data.type==="text"?data.text:(data.type==="image"?"📷 사진":data.type==="voice"?"🎙 음성메시지":"📎 "+(data.fileName||"파일"));
+    const ups={lastText:preview,lastTime:M.serverTimestamp(),lastSender:me.uid};
+    r.members.forEach(u=>{if(u!==me.uid)ups[`unread.${u}`]=M.increment(1);});
+    await M.updateDoc(M.doc(fb.db,"rooms",r.id),ups);
+  }catch(e){toast("전송 실패: "+(e.message||e));console.error(e);}
+}
+$("sendBtn").onclick=sendText;
+$("msgInput").addEventListener("input",()=>{$("sendBtn").disabled=!$("msgInput").value.trim();autoGrow();});
+$("msgInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!isMobile()){e.preventDefault();sendText();}});
+function autoGrow(){const t=$("msgInput");t.style.height="auto";t.style.height=Math.min(t.scrollHeight,110)+"px";}
+function isMobile(){return /iPhone|iPad|Android|Mobile/i.test(navigator.userAgent);}
+
+/* ---------- 파일/사진 업로드 ---------- */
+function setUp(p){const b=$("upbar");b.style.transform=`scaleX(${p})`;if(p>=1)setTimeout(()=>b.style.transform="scaleX(0)",400);}
+async function uploadAndSend(file,kind){
+  if(!curRoom)return;
+  if(file.size>25*1048576){toast("25MB 이하만 보낼 수 있어요");return;}
+  setUp(0.1);
+  const path=`chat/${curRoom.id}/${Date.now()}_${(file.name||kind).replace(/[^\w.\-]/g,"_")}`;
+  const sref=M.ref(fb.storage,path);
+  const task=M.uploadBytesResumable(sref,file);
+  task.on("state_changed",s=>setUp(0.1+0.85*(s.bytesTransferred/s.totalBytes)),
+    e=>{toast("업로드 실패: "+e.message);setUp(1);},
+    async()=>{
+      const url=await M.getDownloadURL(task.snapshot.ref);
+      setUp(1);
+      if(kind==="image")await pushMessage({type:"image",url});
+      else if(kind==="voice")await pushMessage({type:"voice",url});
+      else await pushMessage({type:"file",url,fileName:file.name,fileSize:file.size});
+    });
+}
+$("attachBtn").onclick=()=>openOv("attachSheet");
+$("atPhoto").onclick=()=>{closeOv("attachSheet");$("fileInput").click();};
+$("atFile").onclick=()=>{closeOv("attachSheet");$("anyFileInput").click();};
+$("fileInput").onchange=e=>{if(e.target.files[0])uploadAndSend(e.target.files[0],"image");e.target.value="";};
+$("anyFileInput").onchange=e=>{if(e.target.files[0])uploadAndSend(e.target.files[0],"file");e.target.value="";};
+
+/* ---------- 음성 녹음 ---------- */
+let mediaRec=null,recChunks=[],recording=false;
+$("recBtn").onclick=async()=>{
+  if(recording){mediaRec.stop();return;}
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    mediaRec=new MediaRecorder(stream);recChunks=[];
+    mediaRec.ondataavailable=e=>{if(e.data.size)recChunks.push(e.data);};
+    mediaRec.onstop=()=>{
+      stream.getTracks().forEach(t=>t.stop());recording=false;$("recBtn").classList.remove("rec");$("recBtn").textContent="🎙";
+      const blob=new Blob(recChunks,{type:mediaRec.mimeType||"audio/webm"});
+      if(blob.size>500)uploadAndSend(blob,"voice");
+    };
+    mediaRec.start();recording=true;$("recBtn").classList.add("rec");$("recBtn").textContent="⏹";toast("녹음 중… 다시 누르면 전송");
+  }catch(e){toast("마이크 권한이 필요해요");}
+};
+
+/* ============================================================
+   새 대화 / 그룹
+   ============================================================ */
+$("newChatBtn").onclick=()=>{
+  pickSel.clear();$("grpName").value="";
+  const others=allUsers.filter(u=>u.uid!==me.uid);
+  if(!others.length){toast("아직 다른 직원 계정이 없어요");return;}
+  $("userPickList").innerHTML=others.map(u=>`<div class="userpick" data-uid="${u.uid}">
+    <div class="avatar">${esc(initials(u.name))}</div><div class="nm">${esc(u.name)}<div style="font-size:12px;color:var(--muted);font-weight:400">${esc(u.email||'')}</div></div>
+    <div class="ck">✓</div></div>`).join("");
+  $("userPickList").querySelectorAll(".userpick").forEach(d=>d.onclick=()=>{
+    const u=d.dataset.uid;if(pickSel.has(u)){pickSel.delete(u);d.classList.remove("sel");}else{pickSel.add(u);d.classList.add("sel");}
+  });
+  openOv("newSheet");
+};
+$("createChatBtn").onclick=async()=>{
+  const sel=[...pickSel];if(!sel.length){toast("상대를 선택하세요");return;}
+  const grpName=$("grpName").value.trim();
+  const isGrp=sel.length>1||!!grpName;
+  const members=[me.uid,...sel];
+  const memberNames={};members.forEach(u=>{const us=allUsers.find(x=>x.uid===u);memberNames[u]=us?us.name:(u===me.uid?me.name:"");});
+  // 1:1 기존 방 재사용
+  if(!isGrp){
+    const exist=rooms.find(r=>r.type==="dm"&&r.members.length===2&&r.members.includes(sel[0]));
+    if(exist){closeOv("newSheet");openRoom(exist.id);return;}
+  }
+  const unread={};members.forEach(u=>unread[u]=0);
+  try{
+    const ref=await M.addDoc(M.collection(fb.db,"rooms"),{
+      type:isGrp?"group":"dm",name:isGrp?(grpName||sel.map(u=>memberNames[u]).join(", ")):"",
+      members,memberNames,unread,createdBy:me.uid,createdAt:M.serverTimestamp(),lastTime:M.serverTimestamp(),lastText:""
+    });
+    closeOv("newSheet");
+    setTimeout(()=>openRoom(ref.id),300);
+  }catch(e){toast("생성 실패: "+e.message);}
+};
+
+/* ---------- 대화 정보 / 멤버 ---------- */
+$("chatInfo").onclick=()=>{
+  const r=curRoom;if(!r)return;
+  $("infoTitle").textContent=r.type==="group"?(r.name||"그룹"):roomTitle(r);
+  $("infoMembers").innerHTML=r.members.map(u=>{
+    const nm=(r.memberNames&&r.memberNames[u])||"";
+    return `<div class="userpick"><div class="avatar">${esc(initials(nm))}</div><div class="nm">${esc(nm)}${u===me.uid?' <span style="color:var(--muted);font-size:12px">(나)</span>':''}</div></div>`;
+  }).join("");
+  $("addMemberBtn").style.display=r.type==="group"?"block":"none";
+  openOv("infoSheet");
+};
+$("leaveBtn").onclick=async()=>{
+  if(!curRoom||!confirm("이 대화에서 나가시겠어요?"))return;
+  try{
+    await M.updateDoc(M.doc(fb.db,"rooms",curRoom.id),{members:M.arrayRemove(me.uid)});
+    closeOv("infoSheet");backToList();
+  }catch(e){toast("실패: "+e.message);}
+};
+$("addMemberBtn").onclick=async()=>{
+  const r=curRoom;
+  const cand=allUsers.filter(u=>!r.members.includes(u.uid));
+  if(!cand.length){toast("추가할 직원이 없어요");return;}
+  const name=prompt("추가할 직원 이름 (정확히):\n"+cand.map(u=>u.name).join(", "));
+  if(!name)return;
+  const u=cand.find(x=>x.name===name.trim());
+  if(!u){toast("해당 직원을 찾을 수 없어요");return;}
+  const mn={...r.memberNames};mn[u.uid]=u.name;
+  try{
+    await M.updateDoc(M.doc(fb.db,"rooms",r.id),{members:M.arrayUnion(u.uid),memberNames:mn,[`unread.${u.uid}`]:0});
+    toast(u.name+" 추가됨");closeOv("infoSheet");
+  }catch(e){toast("실패: "+e.message);}
+};
+
+/* ---------- 네비게이션 ---------- */
+function backToList(){if(unsubMsgs){unsubMsgs();unsubMsgs=null;}curRoom=null;$("chatView").style.display="none";$("listView").style.display="flex";}
+$("chatBack").onclick=backToList;
+
+/* ============================================================
+   메뉴 / 프로필 / 로그아웃
+   ============================================================ */
+$("menuBtn").onclick=()=>{renderLockUI();renderNotifUI();openOv("menuSheet");};
+$("mProfile").onclick=async()=>{
+  const nm=prompt("이름 변경",me.name);if(!nm||!nm.trim())return;
+  me.name=nm.trim();
+  await M.updateDoc(M.doc(fb.db,"users",me.uid),{name:me.name});
+  await M.updateProfile(fb.auth.currentUser,{displayName:me.name});
+  $("meLabel").textContent="· "+me.name;toast("이름을 변경했어요");closeOv("menuSheet");
+};
+$("mLogout").onclick=async()=>{
+  if(!confirm("로그아웃 하시겠어요?"))return;
+  await M.signOut(fb.auth);location.reload();
+};
+
+/* ============================================================
+   알림 (FCM 푸시 + 포그라운드)
+   ============================================================ */
+async function registerPush(){
+  const vapid=getVapid();if(!vapid)return;
+  try{
+    const msgMod=await import(SDK+"firebase-messaging.js");
+    fb.msg=msgMod.getMessaging(fb.app);
+    M.getToken=msgMod.getToken;M.onMessage=msgMod.onMessage;
+    if(Notification.permission==="granted"){
+      // 전용 메시징 SW를 config 쿼리와 함께 등록 (SW는 localStorage 접근 불가)
+      const qp=new URLSearchParams({apiKey:CFG.apiKey,authDomain:CFG.authDomain||"",projectId:CFG.projectId,
+        storageBucket:CFG.storageBucket||"",messagingSenderId:CFG.messagingSenderId||"",appId:CFG.appId||""}).toString();
+      const reg=await navigator.serviceWorker.register("firebase-messaging-sw.js?"+qp);
+      const tok=await msgMod.getToken(fb.msg,{vapidKey:vapid,serviceWorkerRegistration:reg});
+      if(tok)await M.setDoc(M.doc(fb.db,"users",me.uid),{fcmTokens:M.arrayUnion(tok)},{merge:true});
+    }
+    msgMod.onMessage(fb.msg,p=>{
+      const n=p.notification||{};
+      if(document.hidden&&Notification.permission==="granted") new Notification(n.title||"새 메시지",{body:n.body,icon:"apple-touch-icon.png"});
+    });
+  }catch(e){console.warn("push init",e);}
+}
+async function ensureNotify(){
+  if(!("Notification"in window)){toast("이 기기는 알림을 지원하지 않아요");return;}
+  if(Notification.permission==="granted"){toast("이미 알림이 켜져 있어요");registerPush();return;}
+  const p=await Notification.requestPermission();
+  if(p==="granted"){toast("🔔 알림을 켰어요");registerPush();}else toast("알림이 거부되었어요");
+}
+$("mNotify").onclick=()=>ensureNotify().then(renderNotifUI);
+function renderNotifUI(){const e=$("mNotifyLabel");if(e)e.textContent=("Notification"in window&&Notification.permission==="granted")?"🔔 알림 켜짐":"알림 켜기";}
+
+/* ============================================================
+   앱 잠금 + Face ID (마이플래너/식단운동에서 재사용)
+   ============================================================ */
+let _lockHiddenAt=0;
+async function hashPin(pin){const b=new TextEncoder().encode("teamtalk-lock|"+pin);const h=await crypto.subtle.digest("SHA-256",b);return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,"0")).join("");}
+function lockIsOn(){return !!localStorage.getItem("app.lock");}
+function _bufToB64u(buf){const b=new Uint8Array(buf);let s="";for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");}
+function _b64uToBuf(s){s=s.replace(/-/g,"+").replace(/_/g,"/");const pd=s.length%4?4-(s.length%4):0;s+="=".repeat(pd);const bin=atob(s);const b=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);return b.buffer;}
+function bioIsOn(){return !!localStorage.getItem("app.lock.bio");}
+async function bioAvailable(){try{return !!window.PublicKeyCredential&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch(e){return false;}}
+async function registerBio(){
+  if(!await bioAvailable()){toast("이 기기는 생체인증을 지원하지 않아요");return false;}
+  try{
+    const cred=await navigator.credentials.create({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:"팀톡"},
+      user:{id:crypto.getRandomValues(new Uint8Array(16)),name:"teamtalk-user",displayName:"팀톡"},
+      pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"preferred"},
+      timeout:60000,attestation:"none"}});
+    if(!cred)return false;
+    localStorage.setItem("app.lock.bio",_bufToB64u(cred.rawId));return true;
+  }catch(e){toast("생체인증 등록 실패 — 암호로 사용하세요");return false;}
+}
+async function bioUnlock(){
+  const id=localStorage.getItem("app.lock.bio");if(!id)return;$("lockMsg").textContent="";
+  try{
+    const a=await navigator.credentials.get({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:"public-key",id:_b64uToBuf(id)}],
+      userVerification:"required",timeout:60000}});
+    if(a){$("lockScreen").style.display="none";}
+  }catch(e){$("lockMsg").textContent="생체인증 취소됨 — 암호로 해제하세요";}
+}
+function showLock(){if(!lockIsOn())return;const ls=$("lockScreen");ls.style.display="flex";$("lockInput").value="";$("lockMsg").textContent="";const bb=$("lockBioBtn");bb.style.display=bioIsOn()?"block":"none";if(bioIsOn())setTimeout(bioUnlock,300);setTimeout(()=>{try{$("lockInput").focus();}catch(e){}},150);}
+async function tryUnlock(){
+  if(await hashPin($("lockInput").value)===localStorage.getItem("app.lock")){$("lockScreen").style.display="none";$("lockMsg").textContent="";}
+  else{$("lockMsg").textContent="암호가 틀렸어요";$("lockInput").value="";try{$("lockInput").focus();}catch(e){}}
+}
+async function setupLock(){
+  if(lockIsOn()){
+    if(!bioIsOn()&&await bioAvailable()&&confirm("Face ID(또는 지문)로 잠금 해제를 추가할까요?")){
+      if(await registerBio())toast("✅ Face ID/지문 추가 완료");renderLockUI();return;}
+    if(confirm("앱 잠금을 끌까요?")){localStorage.removeItem("app.lock");localStorage.removeItem("app.lock.bio");toast("앱 잠금을 껐어요");renderLockUI();}
+    return;
+  }
+  const pin=prompt("설정할 암호 (4~6자리 숫자)");if(pin==null)return;
+  if(!/^\d{4,6}$/.test(pin)){toast("4~6자리 숫자로 입력하세요");return;}
+  localStorage.setItem("app.lock",await hashPin(pin));renderLockUI();
+  if(await bioAvailable()&&confirm("Face ID(또는 지문)로도 해제할까요?")&&await registerBio()){renderLockUI();toast("🔒 잠금 + Face ID 설정 완료");return;}
+  toast("🔒 앱 잠금을 켰어요");
+}
+function renderLockUI(){const el=$("mLockLabel");if(el)el.textContent=lockIsOn()?(bioIsOn()?"🔓 앱 잠금/Face ID 끄기":"🔓 앱 잠금 끄기 (Face ID 추가)"):"앱 잠금 (암호) 설정";}
+$("mLock").onclick=setupLock;
+$("lockBtn").onclick=tryUnlock;
+$("lockBioBtn").onclick=bioUnlock;
+$("lockInput").addEventListener("keydown",e=>{if(e.key==="Enter")tryUnlock();});
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden)_lockHiddenAt=Date.now();
+  else{ if(lockIsOn()&&_lockHiddenAt&&Date.now()-_lockHiddenAt>60000)showLock();
+        if(me&&curRoom)markRead(); }
+});
+
+/* ============================================================
+   오버레이 헬퍼
+   ============================================================ */
+function openOv(id){$(id).classList.add("on");}
+function closeOv(id){$(id).classList.remove("on");}
+document.querySelectorAll(".overlay").forEach(o=>o.onclick=e=>{if(e.target===o)o.classList.remove("on");});
+
+/* ============================================================
+   서버 설정
+   ============================================================ */
+$("cfgBtn").onclick=()=>{
+  $("cfgInput").value=localStorage.getItem("fb.cfg")||"";
+  $("cfgVapid").value=localStorage.getItem("fb.vapid")||"";
+  openOv("cfgSheet");
+};
+$("cfgSave").onclick=()=>{
+  let raw=$("cfgInput").value.trim();
+  if(!raw){toast("설정을 붙여넣으세요");return;}
+  // firebaseConfig = {...} 형태도 허용
+  raw=raw.replace(/^(const|var|let)?\s*firebaseConfig\s*=\s*/,"").replace(/;?\s*$/,"");
+  let obj;
+  try{ obj=JSON.parse(raw); }
+  catch(e){ try{ obj=(new Function("return ("+raw+")"))(); }catch(e2){ toast("형식 오류 — config 객체를 그대로 붙여넣으세요"); return; } }
+  if(!obj.apiKey||!obj.projectId){toast("apiKey/projectId가 없어요");return;}
+  localStorage.setItem("fb.cfg",JSON.stringify(obj));
+  localStorage.setItem("fb.vapid",$("cfgVapid").value.trim());
+  toast("저장됨 — 새로고침합니다");setTimeout(()=>location.reload(),900);
+};
+
+/* ============================================================
+   시작
+   ============================================================ */
+async function boot(){
+  renderAuthMode();
+  if(!CFG){
+    $("authMsg").style.color="var(--accent)";
+    $("authMsg").textContent="먼저 아래 ⚙️ 서버 설정에서 Firebase 설정을 입력하세요";
+    $("authBtn").disabled=true;
+    return;
+  }
+  try{ await initFirebase(); }
+  catch(e){ $("authMsg").style.color="var(--danger)";$("authMsg").textContent="Firebase 연결 실패: "+e.message;return; }
+  M.onAuthStateChanged(fb.auth,user=>{
+    if(user) onLogin(user);
+    else { $("app").classList.add("hidden");$("authScreen").style.display="flex";$("authBtn").disabled=false; }
+  });
+}
+
+/* 서비스워커 + 자동 업데이트 */
+if("serviceWorker"in navigator){
+  navigator.serviceWorker.register("sw.js").then(reg=>{
+    reg.addEventListener("updatefound",()=>{
+      const w=reg.installing;if(!w)return;
+      w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller){toast("새 버전 적용 중…");setTimeout(()=>location.reload(),1200);}});
+    });
+  }).catch(()=>{});
+}
+
+boot();
+</script>
+</body>
+</html>

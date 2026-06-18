@@ -1,0 +1,15 @@
+{
+  "name": "팀톡 — 업무용 메신저",
+  "short_name": "팀톡",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "lang": "ko",
+  "orientation": "portrait",
+  "icons": [
+    {"src": "apple-touch-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "apple-touch-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
