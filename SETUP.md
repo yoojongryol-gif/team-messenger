@@ -1,83 +1,55 @@
-# 팀톡 셋업 가이드 (사장님용 · 약 5~10분)
+# 팀톡 — 업무용 전용 메신저 + 사내 인트라넷
 
-업무용 전용 메신저. 단일 HTML PWA + Firebase(무료). 기존 마이플래너/식단운동 앱과 같은 방식.
+**주소: https://yoojongryol-gif.github.io/team-messenger/**
+폰 브라우저로 열고 "홈 화면에 추가"하면 앱처럼 설치됩니다.
 
----
-
-## 1단계. Firebase 프로젝트 만들기 (무료)
-
-1. https://console.firebase.google.com 접속 (구글 로그인: scjulsan250212 등)
-2. **프로젝트 추가** → 이름 `teamtalk` (또는 아무거나) → 만들기
-   - Google 애널리틱스는 꺼도 됨
-3. 만들어지면 그대로 다음 단계
-
-## 2단계. 웹 앱 등록 → 설정값 복사
-
-1. 프로젝트 개요 화면에서 **`</>` (웹) 아이콘** 클릭
-2. 앱 닉네임 `teamtalk-web` 입력 → 등록
-3. 화면에 나오는 **`firebaseConfig = { ... }`** 객체 전체를 복사
-   (apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId)
-
-## 3단계. 3가지 기능 켜기 (콘솔 좌측 메뉴)
-
-- **빌드 → Authentication** → 시작하기 → **이메일/비밀번호** 사용 설정 ON
-- **빌드 → Firestore Database** → 데이터베이스 만들기 → 위치 `asia-northeast3(서울)` → **테스트 모드**로 시작
-- **빌드 → Storage** → 시작하기 → 위치 동일 → 테스트 모드로 시작
-
-> 테스트 모드는 30일 후 막힙니다. 아래 6단계에서 보안 규칙을 넣으면 영구 사용 가능.
-
-## 4단계. 앱에 설정값 넣기
-
-1. 배포된 앱 주소를 폰/PC 브라우저로 엽니다 (배포 후 주소 안내)
-2. 로그인 화면 아래 **⚙️ 서버 설정** 클릭
-3. 2단계에서 복사한 `firebaseConfig` 객체를 붙여넣고 **저장**
-4. 자동 새로고침되면 준비 끝 → **가입하기**로 직원 계정 생성
-
-> 직원들은 각자 앱 주소 접속 → 가입(이름·이메일·비번)만 하면 서로 대화 가능.
-> (설정값을 매번 넣기 싫으면 index.html 상단 `EMBEDDED_CONFIG`에 박아 배포해도 됨)
+> ✅ Firebase 셋업(프로젝트 teamtalk-efb25, 로그인·DB·저장소·보안규칙)은 **이미 완료**되어 있습니다.
+> 직원들은 그냥 위 주소에서 **가입(이름·이메일·비번)만** 하면 바로 서로 대화·공지·일정 사용 가능합니다.
 
 ---
 
-## 5단계. 푸시 알림 (선택, 앱 꺼져 있어도 알림)
+## 기능
+**💬 채팅**
+- 1:1 / 그룹 실시간 채팅, 읽음 표시, 안 읽음 뱃지
+- 사진 · 파일 · 음성 메시지
+- PDF · Word · Excel · PPT **앱 안에서 바로 열람**
 
-### 5-1. VAPID 키
-- 콘솔 → 프로젝트 설정 → **클라우드 메시징** 탭 → "웹 푸시 인증서" → 키 쌍 생성 → 키 복사
-- 앱 ⚙️ 서버 설정의 **VAPID 키** 칸에 붙여넣고 저장
+**📢 공지사항** — 공지 올리기, 상단 고정(📌), 읽음 표시, 작성자 삭제
+**👥 조직도 · 주소록** — 부서별 그룹, 전화·메일·대화 바로가기. 각자 ✏️로 부서·직급·전화번호 입력
+**📅 팀 일정** — 월간 캘린더, 일정 추가/수정/삭제 공유
 
-### 5-2. 푸시 발송 릴레이 (PC 상주)
-무료 플랜은 Cloud Functions에 카드 등록이 필요하므로, PC에서 도는 파이썬으로 무료 처리:
-- 콘솔 → 프로젝트 설정 → **서비스 계정** → "새 비공개 키 생성" → JSON 다운로드
-- 이 폴더에 `serviceAccountKey.json` 으로 저장
-- `pip install firebase-admin`
-- `python fcm_relay.py` 실행 (PC 켜져 있는 동안 새 메시지마다 푸시 발송)
-
-> 릴레이 없이도 **앱이 켜져 있을 때는 알림이 옵니다**. 앱 완전히 꺼진 상태 푸시만 릴레이 필요.
+**🔒 보안** — 앱 잠금(암호 + Face ID/지문), 로그인한 직원만 접근
 
 ---
 
-## 6단계. 보안 규칙 적용 (30일 후 잠김 방지 · 중요)
-
-- **Firestore Database → 규칙** 탭 → `firestore.rules` 내용 붙여넣기 → 게시
-- **Storage → 규칙** 탭 → `storage.rules` 내용 붙여넣기 → 게시
-
-이러면 로그인한 직원만 접근, 본인 메시지만 작성 가능하게 잠깁니다.
+## 직원 온보딩 (각자 1분)
+1. https://yoojongryol-gif.github.io/team-messenger/ 접속
+2. "가입하기" → 이름·이메일·비번 입력
+3. 조직도 탭 → ✏️ → 부서·직급·전화번호 입력 (선택)
+4. 끝. 채팅·공지·일정 바로 사용
 
 ---
 
-## 파일 구성
+## 남은 선택 작업
+### 푸시 알림 (앱 꺼져 있어도 알림) — 선택
+앱이 켜져 있을 땐 알림이 오지만, 완전히 꺼진 상태 푸시는 아래가 필요:
+1. Firebase 콘솔 → 프로젝트 설정 → 클라우드 메시징 → 웹 푸시 인증서 → 키 생성 → 복사
+2. 앱 ⚙️서버설정의 VAPID 칸에 붙여넣기 (또는 index.html의 `EMBEDDED_VAPID`)
+3. 콘솔 → 프로젝트 설정 → 서비스 계정 → 키 생성 → `serviceAccountKey.json` 저장 → `pip install firebase-admin` → `python fcm_relay.py` (PC 상주)
+
+---
+
+## 관리자 메모 (사장님/개발용)
+- Firebase 프로젝트: **teamtalk-efb25** (계정 scjulsan250212). 요금제 Blaze(예산알림 1만원). Storage=US-EAST1 무료위치.
+- 설정값은 index.html `EMBEDDED_CONFIG`에 내장(웹 config는 공개용, 보안은 규칙으로).
+- 데이터: Firestore(서울) — users / rooms+messages / notices / events. Storage: chat/{roomId}/...
+- 배포: GitHub Pages (repo yoojongryol-gif/team-messenger, 로컬 C:\Users\NHNE\team-messenger). 푸시하면 자동 반영.
+
+## 파일
 | 파일 | 용도 |
 |---|---|
-| index.html | 앱 본체 (로그인·채팅·실시간·파일·문서뷰어·앱잠금) |
+| index.html | 앱 본체 (채팅·공지·조직도·일정·앱잠금) |
 | manifest.json / sw.js | PWA(설치·자동 업데이트) |
 | firebase-messaging-sw.js | 백그라운드 푸시 수신 |
 | fcm_relay.py | 푸시 발송 릴레이 (PC 상주) |
-| firestore.rules / storage.rules | 보안 규칙 |
-| apple-touch-icon.png | 앱 아이콘 |
-
-## 기능
-- 1:1 / 그룹 채팅, 실시간 전송, 읽음 표시, 안 읽음 뱃지
-- 사진 · 파일 · 음성 메시지
-- **PDF · Word · Excel · PPT 앱 내 미리보기** (Office/구글 뷰어)
-- 푸시 알림 (FCM)
-- 앱 잠금 (암호 + Face ID/지문)
-- 폰 홈화면 설치, 자동 업데이트
+| firestore.rules / storage.rules | 보안 규칙 (이미 콘솔에 게시됨) |
