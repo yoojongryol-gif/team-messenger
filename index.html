@@ -392,12 +392,15 @@ $("authBtn").onclick=doAuth;
 $("aPass").addEventListener("keydown",e=>{if(e.key==="Enter")doAuth();});
 
 async function onLogin(user){
-  me={uid:user.uid,name:user.displayName||"나",email:user.email};
-  // 사용자 문서 보장
+  await user.reload().catch(()=>{});
+  user = fb.auth.currentUser || user;
+  me={uid:user.uid,name:user.displayName||"",email:user.email};
+  // 사용자 문서 보장 (가입 직후 setDoc 인플라이트 레이스 대비 재시도)
   const uref=M.doc(fb.db,"users",me.uid);
-  const snap=await M.getDoc(uref);
-  if(!snap.exists()) await M.setDoc(uref,{name:me.name,email:me.email,createdAt:M.serverTimestamp(),lastSeen:M.serverTimestamp()});
-  else { me.name=snap.data().name||me.name; await M.updateDoc(uref,{lastSeen:M.serverTimestamp()}); }
+  let snap=await M.getDoc(uref);
+  if(!snap.exists()&&!me.name){ await new Promise(r=>setTimeout(r,900)); snap=await M.getDoc(uref); }
+  if(snap.exists()){ me.name=snap.data().name||me.name||"나"; await M.updateDoc(uref,{lastSeen:M.serverTimestamp()}); }
+  else { me.name=me.name||"나"; await M.setDoc(uref,{name:me.name,email:me.email,createdAt:M.serverTimestamp(),lastSeen:M.serverTimestamp()}); }
   $("authScreen").style.display="none";
   $("app").classList.remove("hidden");
   $("meLabel").textContent="· "+me.name;
