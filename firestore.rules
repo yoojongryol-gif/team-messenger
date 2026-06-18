@@ -32,5 +32,19 @@ service cloud.firestore {
         allow delete: if false;
       }
     }
+
+    // 공지사항: 로그인한 직원 누구나 읽기/작성, 작성자만 수정·삭제
+    match /notices/{noticeId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.author == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.author == request.auth.uid;
+    }
+
+    // 팀 일정: 로그인한 직원 누구나 읽기/작성, 작성자만 수정·삭제
+    match /events/{eventId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.author == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.author == request.auth.uid;
+    }
   }
 }

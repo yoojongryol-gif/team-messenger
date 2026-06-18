@@ -143,6 +143,50 @@ input,textarea{font-family:inherit;font-size:16px}
 .menu-item:active{opacity:.6}
 .menu-item .ic{font-size:20px;width:26px;text-align:center}
 .typing{font-size:12px;color:var(--accent);padding:0 16px 6px}
+/* 하단 탭 네비 */
+.tabpanel{flex:1;display:flex;flex-direction:column;min-height:0;position:relative}
+.bottomnav{display:flex;border-top:1px solid var(--line);background:var(--panel);padding-bottom:var(--safe-b)}
+.navbtn{flex:1;background:transparent;border:none;color:var(--muted);font-size:11px;padding:7px 0 6px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+.navbtn .ni{font-size:21px;line-height:1;filter:grayscale(.4) opacity(.7)}
+.navbtn.on{color:var(--accent)}
+.navbtn.on .ni{filter:none}
+.navbadge{position:absolute;top:3px;left:calc(50% + 6px);background:var(--danger);color:#fff;font-size:10px;
+  min-width:16px;height:16px;border-radius:8px;display:none;align-items:center;justify-content:center;padding:0 4px}
+.navbadge.on{display:flex}
+.fab{bottom:calc(74px + var(--safe-b))}
+/* 공지 */
+.notice{padding:14px 16px;border-bottom:1px solid var(--line)}
+.notice:active{background:var(--panel)}
+.notice .nt{font-weight:600;display:flex;align-items:center;gap:6px}
+.notice .nb{font-size:13px;color:var(--muted);margin-top:4px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.notice .nm{font-size:11px;color:var(--muted);margin-top:6px}
+.notice .pin{color:#f59e0b}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block}
+/* 조직도 */
+.deptgroup{margin:6px 0}
+.depthead{font-size:12px;color:var(--accent);font-weight:700;padding:12px 16px 6px}
+.diruser{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line)}
+.diruser .di{flex:1;min-width:0}
+.diruser .dn{font-weight:600}
+.diruser .dp{font-size:12px;color:var(--muted);margin-top:2px}
+.diruser .dact{display:flex;gap:8px}
+.diruser .dact a{width:36px;height:36px;border-radius:50%;background:var(--panel2);display:flex;align-items:center;
+  justify-content:center;text-decoration:none;font-size:16px}
+/* 일정 */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:8px}
+.cal-dow{text-align:center;font-size:11px;color:var(--muted);padding:4px 0}
+.cal-cell{aspect-ratio:1;border-radius:8px;padding:4px;font-size:12px;background:var(--panel);position:relative;cursor:pointer}
+.cal-cell.other{opacity:.35}
+.cal-cell.today{outline:1px solid var(--accent)}
+.cal-cell .evd{position:absolute;bottom:4px;left:4px;right:4px;display:flex;gap:2px;flex-wrap:wrap}
+.cal-cell .evd i{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.cal-sun{color:#f87171}.cal-sat{color:#60a5fa}
+.evlist{padding:6px 16px 16px}
+.evitem{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.evitem .ed{font-weight:700;color:var(--accent);min-width:54px;font-size:13px}
+.evitem .et{font-weight:600}
+.evitem .ec{font-size:12px;color:var(--muted);margin-top:2px}
 /* 문서 뷰어 */
 #docViewer{position:fixed;inset:0;background:#0b1220;z-index:360;display:none;flex-direction:column}
 .doc-top{display:flex;align-items:center;gap:8px;padding:calc(8px + var(--safe-t)) 8px 8px;background:#000;border-bottom:1px solid var(--line)}
@@ -180,14 +224,45 @@ input,textarea{font-family:inherit;font-size:16px}
 
 <!-- 메인 -->
 <div id="app" class="hidden">
-  <!-- 목록 화면 -->
-  <div id="listView" style="display:flex;flex-direction:column;height:100%">
-    <div class="topbar">
-      <div class="title">팀톡 <span class="sub" id="meLabel"></span></div>
-      <button class="iconbtn" id="menuBtn">⋮</button>
+  <!-- 홈 (하단 탭) -->
+  <div id="homeView" style="display:flex;flex-direction:column;height:100%">
+    <!-- 💬 채팅 탭 -->
+    <div class="tabpanel" id="tabChat">
+      <div class="topbar">
+        <div class="title">팀톡 <span class="sub" id="meLabel"></span></div>
+        <button class="iconbtn" id="menuBtn">⋮</button>
+      </div>
+      <div class="scroll" id="roomList"></div>
+      <button class="fab" id="newChatBtn">✏️</button>
     </div>
-    <div class="scroll" id="roomList"></div>
-    <button class="fab" id="newChatBtn">✏️</button>
+    <!-- 📢 공지 탭 -->
+    <div class="tabpanel" id="tabNotice" style="display:none">
+      <div class="topbar"><div class="title">공지사항</div></div>
+      <div class="scroll" id="noticeList"></div>
+      <button class="fab" id="newNoticeBtn">＋</button>
+    </div>
+    <!-- 👥 조직도 탭 -->
+    <div class="tabpanel" id="tabDir" style="display:none">
+      <div class="topbar"><div class="title">조직도 · 주소록</div><button class="iconbtn" id="dirEditBtn">✏️</button></div>
+      <div class="scroll" id="dirList"></div>
+    </div>
+    <!-- 📅 일정 탭 -->
+    <div class="tabpanel" id="tabCal" style="display:none">
+      <div class="topbar">
+        <button class="iconbtn" id="calPrev">‹</button>
+        <div class="title" id="calTitle" style="text-align:center">일정</div>
+        <button class="iconbtn" id="calNext">›</button>
+      </div>
+      <div class="scroll" id="calBody"></div>
+      <button class="fab" id="newEventBtn">＋</button>
+    </div>
+    <!-- 하단 네비게이션 -->
+    <nav class="bottomnav">
+      <button class="navbtn on" data-tab="tabChat"><span class="ni">💬</span><span>채팅</span><span class="navbadge" id="navChatBadge"></span></button>
+      <button class="navbtn" data-tab="tabNotice"><span class="ni">📢</span><span>공지</span><span class="navbadge" id="navNoticeBadge"></span></button>
+      <button class="navbtn" data-tab="tabDir"><span class="ni">👥</span><span>조직도</span></button>
+      <button class="navbtn" data-tab="tabCal"><span class="ni">📅</span><span>일정</span></button>
+    </nav>
   </div>
 
   <!-- 채팅 화면 -->
@@ -254,6 +329,52 @@ input,textarea{font-family:inherit;font-size:16px}
     <h3>첨부</h3>
     <div class="menu-item" id="atPhoto"><span class="ic">🖼</span>사진</div>
     <div class="menu-item" id="atFile"><span class="ic">📎</span>파일</div>
+  </div>
+</div>
+
+<!-- 공지 작성 시트 -->
+<div class="overlay" id="noticeWriteSheet">
+  <div class="sheet">
+    <h3>공지 작성</h3>
+    <div class="field"><label>제목</label><input id="ntTitle" placeholder="공지 제목"></div>
+    <div class="field"><label>내용</label><textarea id="ntBody" rows="6" placeholder="공지 내용을 입력하세요"></textarea></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:14px;margin-bottom:12px"><input type="checkbox" id="ntPin" style="width:auto"> 상단 고정</label>
+    <button class="btn" id="ntSave">공지 올리기</button>
+  </div>
+</div>
+
+<!-- 공지 상세 시트 -->
+<div class="overlay" id="noticeViewSheet">
+  <div class="sheet">
+    <h3 id="nvTitle">공지</h3>
+    <div id="nvMeta" style="font-size:12px;color:var(--muted);margin-bottom:12px"></div>
+    <div id="nvBody" style="white-space:pre-wrap;line-height:1.6"></div>
+    <button class="btn danger" id="nvDelete" style="margin-top:16px;display:none">공지 삭제</button>
+  </div>
+</div>
+
+<!-- 일정 작성 시트 -->
+<div class="overlay" id="eventWriteSheet">
+  <div class="sheet">
+    <h3>일정 추가</h3>
+    <div class="field"><label>제목</label><input id="evTitle" placeholder="예: 거래처 미팅"></div>
+    <div class="field"><label>날짜</label><input id="evDate" type="date"></div>
+    <div class="field"><label>시간 (선택)</label><input id="evTime" type="time"></div>
+    <div class="field"><label>메모 (선택)</label><textarea id="evDesc" rows="3" placeholder="장소·내용 등"></textarea></div>
+    <button class="btn" id="evSave">일정 저장</button>
+    <button class="btn danger" id="evDelete" style="margin-top:10px;display:none">일정 삭제</button>
+  </div>
+</div>
+
+<!-- 프로필 시트 (이름·부서·직급·연락처) -->
+<div class="overlay" id="profileSheet">
+  <div class="sheet">
+    <h3>내 프로필</h3>
+    <div class="field"><label>이름</label><input id="pfName" placeholder="홍길동"></div>
+    <div class="field"><label>부서</label><input id="pfDept" placeholder="예: 영업팀"></div>
+    <div class="field"><label>직급</label><input id="pfPos" placeholder="예: 대리"></div>
+    <div class="field"><label>전화번호</label><input id="pfPhone" type="tel" placeholder="010-0000-0000"></div>
+    <button class="btn" id="pfSave">저장</button>
   </div>
 </div>
 
@@ -399,7 +520,7 @@ async function onLogin(user){
   const uref=M.doc(fb.db,"users",me.uid);
   let snap=await M.getDoc(uref);
   if(!snap.exists()&&!me.name){ await new Promise(r=>setTimeout(r,900)); snap=await M.getDoc(uref); }
-  if(snap.exists()){ me.name=snap.data().name||me.name||"나"; await M.updateDoc(uref,{lastSeen:M.serverTimestamp()}); }
+  if(snap.exists()){ const d=snap.data(); me.name=d.name||me.name||"나"; me.dept=d.dept||""; me.pos=d.position||""; me.phone=d.phone||""; await M.updateDoc(uref,{lastSeen:M.serverTimestamp()}); }
   else { me.name=me.name||"나"; await M.setDoc(uref,{name:me.name,email:me.email,createdAt:M.serverTimestamp(),lastSeen:M.serverTimestamp()}); }
   $("authScreen").style.display="none";
   $("app").classList.remove("hidden");
@@ -407,7 +528,10 @@ async function onLogin(user){
   if(lockIsOn()) showLock();
   watchUsers();
   watchRooms();
+  watchNotices();
   registerPush();
+  switchTab("tabChat");
+  renderEventsMonth();
   renderNotifUI();renderLockUI();
   $("verLabel").textContent="팀톡 v"+APP_VER;
 }
@@ -419,6 +543,7 @@ function watchUsers(){
   if(unsubUsers)unsubUsers();
   unsubUsers=M.onSnapshot(M.collection(fb.db,"users"),snap=>{
     allUsers=snap.docs.map(d=>({uid:d.id,...d.data()}));
+    renderDir();
   });
 }
 function watchRooms(){
@@ -460,7 +585,8 @@ function roomTitle(r){
   return (r.memberNames&&r.memberNames[other])||"대화";
 }
 function totalUnread(){return rooms.reduce((s,r)=>s+((r.unread&&r.unread[me.uid])||0),0);}
-function updateAppBadge(){const n=totalUnread();try{if(navigator.setAppBadge){n?navigator.setAppBadge(n):navigator.clearAppBadge();}}catch(e){}}
+function updateAppBadge(){const n=totalUnread();try{if(navigator.setAppBadge){n?navigator.setAppBadge(n):navigator.clearAppBadge();}}catch(e){}
+  const b=$("navChatBadge");if(b){b.textContent=n>9?"9+":n;b.classList.toggle("on",n>0);}}
 
 /* ============================================================
    채팅방 열기 / 메시지
@@ -468,7 +594,7 @@ function updateAppBadge(){const n=totalUnread();try{if(navigator.setAppBadge){n?
 async function openRoom(id){
   const r=rooms.find(x=>x.id===id);if(!r)return;
   curRoom=r;
-  $("listView").style.display="none";
+  $("homeView").style.display="none";
   $("chatView").style.display="flex";
   renderChatHeader();
   $("msgList").innerHTML='<div class="empty">불러오는 중…</div>';
@@ -700,19 +826,27 @@ $("addMemberBtn").onclick=async()=>{
 };
 
 /* ---------- 네비게이션 ---------- */
-function backToList(){if(unsubMsgs){unsubMsgs();unsubMsgs=null;}curRoom=null;$("chatView").style.display="none";$("listView").style.display="flex";}
+function backToList(){if(unsubMsgs){unsubMsgs();unsubMsgs=null;}curRoom=null;$("chatView").style.display="none";$("homeView").style.display="flex";switchTab("tabChat");}
 $("chatBack").onclick=backToList;
 
 /* ============================================================
    메뉴 / 프로필 / 로그아웃
    ============================================================ */
 $("menuBtn").onclick=()=>{renderLockUI();renderNotifUI();openOv("menuSheet");};
-$("mProfile").onclick=async()=>{
-  const nm=prompt("이름 변경",me.name);if(!nm||!nm.trim())return;
-  me.name=nm.trim();
-  await M.updateDoc(M.doc(fb.db,"users",me.uid),{name:me.name});
-  await M.updateProfile(fb.auth.currentUser,{displayName:me.name});
-  $("meLabel").textContent="· "+me.name;toast("이름을 변경했어요");closeOv("menuSheet");
+$("mProfile").onclick=()=>{ closeOv("menuSheet"); openProfile(); };
+function openProfile(){
+  $("pfName").value=me.name||""; $("pfDept").value=me.dept||""; $("pfPos").value=me.pos||""; $("pfPhone").value=me.phone||"";
+  openOv("profileSheet");
+}
+$("dirEditBtn").onclick=openProfile;
+$("pfSave").onclick=async()=>{
+  const nm=$("pfName").value.trim(); if(!nm){toast("이름을 입력하세요");return;}
+  me.name=nm; me.dept=$("pfDept").value.trim(); me.pos=$("pfPos").value.trim(); me.phone=$("pfPhone").value.trim();
+  try{
+    await M.setDoc(M.doc(fb.db,"users",me.uid),{name:me.name,dept:me.dept,position:me.pos,phone:me.phone},{merge:true});
+    await M.updateProfile(fb.auth.currentUser,{displayName:me.name}).catch(()=>{});
+    $("meLabel").textContent="· "+me.name; closeOv("profileSheet"); toast("프로필을 저장했어요");
+  }catch(e){toast("저장 실패: "+e.message);}
 };
 $("mLogout").onclick=async()=>{
   if(!confirm("로그아웃 하시겠어요?"))return;
@@ -750,6 +884,197 @@ async function ensureNotify(){
 }
 $("mNotify").onclick=()=>ensureNotify().then(renderNotifUI);
 function renderNotifUI(){const e=$("mNotifyLabel");if(e)e.textContent=("Notification"in window&&Notification.permission==="granted")?"🔔 알림 켜짐":"알림 켜기";}
+
+/* ============================================================
+   하단 탭 네비게이션
+   ============================================================ */
+let curTab="tabChat";
+function switchTab(id){
+  curTab=id;
+  document.querySelectorAll(".tabpanel").forEach(p=>p.style.display=p.id===id?"flex":"none");
+  document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("on",b.dataset.tab===id));
+  if(id==="tabNotice")markNoticesRead();
+  if(id==="tabDir")renderDir();
+  if(id==="tabCal")renderEventsMonth();
+}
+document.querySelectorAll(".navbtn").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+
+/* ============================================================
+   공지사항 / 게시판
+   ============================================================ */
+let notices=[], unsubNotices=null;
+function noticeReadKey(){return "notice.read."+(me?me.uid:"");}
+function getReadNotices(){try{return new Set(JSON.parse(localStorage.getItem(noticeReadKey())||"[]"));}catch(e){return new Set();}}
+function watchNotices(){
+  if(unsubNotices)unsubNotices();
+  const q=M.query(M.collection(fb.db,"notices"),M.orderBy("createdAt","desc"),M.limit(100));
+  unsubNotices=M.onSnapshot(q,snap=>{
+    notices=snap.docs.map(d=>({id:d.id,...d.data()}));
+    notices.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)||(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+    renderNotices();
+    if(curTab==="tabNotice")markNoticesRead();
+  });
+}
+function renderNotices(){
+  const el=$("noticeList");
+  if(!notices.length){el.innerHTML='<div class="empty">아직 공지가 없어요.<br>＋ 버튼으로 첫 공지를 올려보세요.</div>';updateNoticeBadge();return;}
+  const read=getReadNotices();
+  el.innerHTML=notices.map(n=>{
+    const unread=!read.has(n.id);
+    return `<div class="notice" data-id="${n.id}">
+      <div class="nt">${n.pinned?'<span class="pin">📌</span>':''}${unread?'<span class="dot"></span>':''}${esc(n.title)}</div>
+      <div class="nb">${esc(n.body||"")}</div>
+      <div class="nm">${esc(n.authorName||"")} · ${fmtRoomTime(n.createdAt)}</div>
+    </div>`;
+  }).join("");
+  el.querySelectorAll(".notice").forEach(d=>d.onclick=()=>openNotice(d.dataset.id));
+  updateNoticeBadge();
+}
+function updateNoticeBadge(){
+  const read=getReadNotices();
+  const n=notices.filter(x=>!read.has(x.id)).length;
+  const b=$("navNoticeBadge");b.textContent=n>9?"9+":n;b.classList.toggle("on",n>0);
+}
+function markNoticesRead(){
+  const read=getReadNotices();notices.forEach(n=>read.add(n.id));
+  localStorage.setItem(noticeReadKey(),JSON.stringify([...read]));
+  updateNoticeBadge();renderNotices();
+}
+$("newNoticeBtn").onclick=()=>{$("ntTitle").value="";$("ntBody").value="";$("ntPin").checked=false;openOv("noticeWriteSheet");};
+$("ntSave").onclick=async()=>{
+  const title=$("ntTitle").value.trim(),body=$("ntBody").value.trim();
+  if(!title){toast("제목을 입력하세요");return;}
+  try{
+    await M.addDoc(M.collection(fb.db,"notices"),{title,body,pinned:$("ntPin").checked,author:me.uid,authorName:me.name,createdAt:M.serverTimestamp()});
+    closeOv("noticeWriteSheet");toast("공지를 올렸어요");
+  }catch(e){toast("실패: "+e.message);}
+};
+let curNotice=null;
+function openNotice(id){
+  const n=notices.find(x=>x.id===id);if(!n)return;curNotice=n;
+  $("nvTitle").textContent=(n.pinned?"📌 ":"")+n.title;
+  $("nvMeta").textContent=`${n.authorName||""} · ${fmtDay(n.createdAt)} ${fmtTime(n.createdAt)}`;
+  $("nvBody").textContent=n.body||"";
+  $("nvDelete").style.display=n.author===me.uid?"block":"none";
+  openOv("noticeViewSheet");
+}
+$("nvDelete").onclick=async()=>{
+  if(!curNotice||!confirm("이 공지를 삭제할까요?"))return;
+  try{await M.deleteDoc(M.doc(fb.db,"notices",curNotice.id));closeOv("noticeViewSheet");toast("삭제했어요");}
+  catch(e){toast("실패: "+e.message);}
+};
+
+/* ============================================================
+   조직도 / 직원 주소록
+   ============================================================ */
+function renderDir(){
+  const el=$("dirList");if(!el)return;
+  if(!allUsers.length){el.innerHTML='<div class="empty">직원 정보를 불러오는 중…</div>';return;}
+  // 부서별 그룹
+  const groups={};
+  allUsers.forEach(u=>{const d=(u.dept||"").trim()||"부서 미지정";(groups[d]=groups[d]||[]).push(u);});
+  const order=Object.keys(groups).sort((a,b)=>a==="부서 미지정"?1:b==="부서 미지정"?-1:a.localeCompare(b,"ko"));
+  el.innerHTML=order.map(dep=>{
+    const us=groups[dep].sort((a,b)=>(a.name||"").localeCompare(b.name||"","ko"));
+    return `<div class="deptgroup"><div class="depthead">${esc(dep)} <span style="color:var(--muted)">${us.length}</span></div>`+
+      us.map(u=>`<div class="diruser">
+        <div class="avatar" style="width:42px;height:42px;border-radius:12px;font-size:16px">${esc(initials(u.name))}</div>
+        <div class="di"><div class="dn">${esc(u.name||"")}${u.uid===me.uid?' <span style="color:var(--muted);font-size:12px">(나)</span>':''}</div>
+          <div class="dp">${esc(u.position||"")}${u.position&&u.phone?" · ":""}${esc(u.phone||u.email||"")}</div></div>
+        <div class="dact">
+          ${u.phone?`<a href="tel:${esc(u.phone)}">📞</a>`:""}
+          ${u.email?`<a href="mailto:${esc(u.email)}">✉️</a>`:""}
+          ${u.uid!==me.uid?`<a href="#" data-dm="${u.uid}">💬</a>`:""}
+        </div></div>`).join("")+`</div>`;
+  }).join("");
+  el.querySelectorAll("a[data-dm]").forEach(a=>a.onclick=e=>{e.preventDefault();dmWith(a.dataset.dm);});
+}
+async function dmWith(uid){
+  const exist=rooms.find(r=>r.type==="dm"&&r.members.length===2&&r.members.includes(uid));
+  if(exist){switchTab("tabChat");openRoom(exist.id);return;}
+  const u=allUsers.find(x=>x.uid===uid);if(!u)return;
+  const members=[me.uid,uid],memberNames={};memberNames[me.uid]=me.name;memberNames[uid]=u.name;
+  const unread={};members.forEach(m=>unread[m]=0);
+  try{
+    const ref=await M.addDoc(M.collection(fb.db,"rooms"),{type:"dm",name:"",members,memberNames,unread,createdBy:me.uid,createdAt:M.serverTimestamp(),lastTime:M.serverTimestamp(),lastText:""});
+    switchTab("tabChat");setTimeout(()=>openRoom(ref.id),300);
+  }catch(e){toast("실패: "+e.message);}
+}
+
+/* ============================================================
+   일정 공유 (팀 캘린더)
+   ============================================================ */
+let events=[], unsubEvents=null, calYM=null;
+function ymKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
+function watchEventsMonth(){
+  if(unsubEvents)unsubEvents();
+  const start=`${ymKey(calYM)}-00`, end=`${ymKey(calYM)}-99`;
+  const q=M.query(M.collection(fb.db,"events"),M.where("date",">=",start),M.where("date","<=",end));
+  unsubEvents=M.onSnapshot(q,snap=>{events=snap.docs.map(d=>({id:d.id,...d.data()}));drawCal();},err=>{console.warn(err);});
+}
+function renderEventsMonth(){
+  if(!calYM)calYM=new Date(new Date().getFullYear(),new Date().getMonth(),1);
+  watchEventsMonth();drawCal();
+}
+function drawCal(){
+  const y=calYM.getFullYear(),m=calYM.getMonth();
+  $("calTitle").textContent=`${y}년 ${m+1}월`;
+  const first=new Date(y,m,1),startDow=first.getDay(),days=new Date(y,m+1,0).getDate();
+  const prevDays=new Date(y,m,0).getDate();
+  const today=new Date(),tStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+  const evByDay={};events.forEach(e=>{(evByDay[e.date]=evByDay[e.date]||[]).push(e);});
+  const dows=["일","월","화","수","목","금","토"];
+  let cells="";
+  for(let i=0;i<startDow;i++){const d=prevDays-startDow+1+i;cells+=`<div class="cal-cell other">${d}</div>`;}
+  for(let d=1;d<=days;d++){
+    const ds=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const dow=new Date(y,m,d).getDay();
+    const cls=dow===0?"cal-sun":dow===6?"cal-sat":"";
+    const evs=evByDay[ds]||[];
+    cells+=`<div class="cal-cell ${ds===tStr?'today':''}" data-d="${ds}"><span class="${cls}">${d}</span>${evs.length?`<div class="evd">${evs.slice(0,4).map(()=>'<i></i>').join("")}</div>`:''}</div>`;
+  }
+  const grid=`<div class="cal-grid">${dows.map((w,i)=>`<div class="cal-dow ${i===0?'cal-sun':i===6?'cal-sat':''}">${w}</div>`).join("")}${cells}</div>`;
+  // 이번 달 일정 목록
+  const sorted=[...events].sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
+  const list=sorted.length?`<div class="evlist">${sorted.map(e=>`<div class="evitem" data-id="${e.id}">
+      <div class="ed">${(+e.date.slice(5,7))}/${(+e.date.slice(8,10))}${e.time?`<br><span style="font-weight:400">${esc(e.time)}</span>`:""}</div>
+      <div style="flex:1"><div class="et">${esc(e.title)}</div>${e.desc?`<div class="ec">${esc(e.desc)}</div>`:""}<div class="ec">${esc(e.authorName||"")}</div></div>
+    </div>`).join("")}</div>`:'<div class="empty">이번 달 일정이 없어요.<br>＋ 버튼 또는 날짜를 눌러 추가하세요.</div>';
+  $("calBody").innerHTML=grid+list;
+  $("calBody").querySelectorAll(".cal-cell[data-d]").forEach(c=>c.onclick=()=>openEvent(null,c.dataset.d));
+  $("calBody").querySelectorAll(".evitem").forEach(it=>it.onclick=()=>openEvent(it.dataset.id));
+}
+$("calPrev").onclick=()=>{calYM=new Date(calYM.getFullYear(),calYM.getMonth()-1,1);renderEventsMonth();};
+$("calNext").onclick=()=>{calYM=new Date(calYM.getFullYear(),calYM.getMonth()+1,1);renderEventsMonth();};
+let curEvent=null;
+function todayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
+$("newEventBtn").onclick=()=>openEvent(null,todayStr());
+function openEvent(id,date){
+  curEvent=id?events.find(e=>e.id===id):null;
+  if(curEvent){
+    $("evTitle").value=curEvent.title||"";$("evDate").value=curEvent.date||"";$("evTime").value=curEvent.time||"";$("evDesc").value=curEvent.desc||"";
+    $("evDelete").style.display=curEvent.author===me.uid?"block":"none";
+  }else{
+    $("evTitle").value="";$("evDate").value=date||todayStr();$("evTime").value="";$("evDesc").value="";
+    $("evDelete").style.display="none";
+  }
+  openOv("eventWriteSheet");
+}
+$("evSave").onclick=async()=>{
+  const title=$("evTitle").value.trim(),date=$("evDate").value;
+  if(!title||!date){toast("제목과 날짜를 입력하세요");return;}
+  const data={title,date,time:$("evTime").value||"",desc:$("evDesc").value.trim()};
+  try{
+    if(curEvent)await M.updateDoc(M.doc(fb.db,"events",curEvent.id),data);
+    else await M.addDoc(M.collection(fb.db,"events"),{...data,author:me.uid,authorName:me.name,createdAt:M.serverTimestamp()});
+    closeOv("eventWriteSheet");toast("일정을 저장했어요");
+  }catch(e){toast("실패: "+e.message);}
+};
+$("evDelete").onclick=async()=>{
+  if(!curEvent||!confirm("이 일정을 삭제할까요?"))return;
+  try{await M.deleteDoc(M.doc(fb.db,"events",curEvent.id));closeOv("eventWriteSheet");toast("삭제했어요");}
+  catch(e){toast("실패: "+e.message);}
+};
 
 /* ============================================================
    앱 잠금 + Face ID (마이플래너/식단운동에서 재사용)
