@@ -289,9 +289,17 @@ input,textarea{font-family:inherit;font-size:16px}
    ============================================================ */
 const APP_VER = "1.0.0";
 
-/* ---------- Firebase 설정 (사장님이 서버설정에서 입력 → localStorage) ---------- */
-const EMBEDDED_CONFIG = null; // 배포 시 여기에 firebaseConfig 객체를 넣으면 입력 불필요
-const EMBEDDED_VAPID = "";
+/* ---------- Firebase 설정 (teamtalk-efb25 프로젝트, 2026-06-18 연결) ----------
+   웹 설정값은 비밀이 아니라 공개용 — 보안은 firestore.rules/storage.rules로 처리 */
+const EMBEDDED_CONFIG = {
+  apiKey: "AIzaSyCkzaUxIYaXW1bgtLT78c-yH2HIefZuUPA",
+  authDomain: "teamtalk-efb25.firebaseapp.com",
+  projectId: "teamtalk-efb25",
+  storageBucket: "teamtalk-efb25.firebasestorage.app",
+  messagingSenderId: "551746075417",
+  appId: "1:551746075417:web:8d73e2827afdebd4e72388"
+};
+const EMBEDDED_VAPID = ""; // 푸시용 VAPID 키 (콘솔 클라우드 메시징 → 웹 푸시 인증서)
 
 function loadCfg(){
   try{ return JSON.parse(localStorage.getItem("fb.cfg")||"null") || EMBEDDED_CONFIG; }
