@@ -192,6 +192,13 @@ input,textarea{font-family:inherit;font-size:16px}
 .doc-top{display:flex;align-items:center;gap:8px;padding:calc(8px + var(--safe-t)) 8px 8px;background:#000;border-bottom:1px solid var(--line)}
 .doc-body{flex:1;position:relative;background:#fff}
 .doc-body iframe{position:absolute;inset:0;width:100%;height:100%;border:none;background:#fff}
+#docRender{position:absolute;inset:0;overflow:auto;background:#525659;-webkit-overflow-scrolling:touch;display:none;padding:8px 0}
+#docRender canvas{display:block;margin:0 auto 8px;max-width:100%;box-shadow:0 1px 6px #0006}
+.docx-html{max-width:820px;margin:0 auto;padding:22px 20px;background:#fff;color:#111;line-height:1.7;font-size:15px;min-height:100%}
+.docx-html img{max-width:100%;height:auto}
+.docx-html table{border-collapse:collapse;margin:8px 0}
+.docx-html td,.docx-html th{border:1px solid #ccc;padding:4px 8px}
+.docx-html h1,.docx-html h2,.docx-html h3{line-height:1.35}
 .doc-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#888;font-size:14px}
 </style>
 </head>
@@ -206,6 +213,7 @@ input,textarea{font-family:inherit;font-size:16px}
     <div class="field" id="nameField" style="display:none"><label>이름</label><input id="aName" placeholder="홍길동" autocomplete="name"></div>
     <div class="field"><label>이메일</label><input id="aEmail" type="email" placeholder="you@company.com" autocomplete="username"></div>
     <div class="field"><label>비밀번호</label><input id="aPass" type="password" placeholder="6자 이상" autocomplete="current-password"></div>
+    <div class="field" id="inviteField" style="display:none"><label>초대 코드</label><input id="aInvite" placeholder="회사에서 받은 코드" autocomplete="off"></div>
     <button class="btn" id="authBtn">로그인</button>
     <button class="linkbtn" id="authToggle">계정이 없으신가요? 가입하기</button>
     <button class="linkbtn" id="authReset">비밀번호를 잊으셨나요?</button>
@@ -400,7 +408,7 @@ input,textarea{font-family:inherit;font-size:16px}
     <div class="title" id="docTitle" style="flex:1;color:#fff;font-size:15px">문서</div>
     <button class="iconbtn" id="docOpenExt" title="외부에서 열기" style="color:#fff">⤴</button>
   </div>
-  <div class="doc-body"><div class="doc-load">문서를 불러오는 중…</div><iframe id="docFrame" src="about:blank"></iframe></div>
+  <div class="doc-body"><div class="doc-load" id="docLoad">문서를 불러오는 중…</div><div id="docRender"></div><iframe id="docFrame" src="about:blank"></iframe></div>
 </div>
 
 <div id="toast"></div>
@@ -475,6 +483,7 @@ function fmtSize(b){if(!b)return"";if(b<1024)return b+"B";if(b<1048576)return (b
 let authMode = "login";
 function renderAuthMode(){
   $("nameField").style.display = authMode==="signup"?"block":"none";
+  $("inviteField").style.display = authMode==="signup"?"block":"none";
   $("authBtn").textContent = authMode==="signup"?"가입하기":"로그인";
   $("authToggle").textContent = authMode==="signup"?"이미 계정이 있으신가요? 로그인":"계정이 없으신가요? 가입하기";
   $("authReset").style.display = authMode==="signup"?"none":"block";
@@ -494,24 +503,38 @@ $("authReset").onclick=async()=>{
   }
 };
 
+// 초대 코드 해시 (규칙에 넣은 해시와 동일 방식: 소문자·공백제거)
+async function hashInvite(code){
+  const b=new TextEncoder().encode("teamtalk-invite|"+code.trim().toLowerCase());
+  const h=await crypto.subtle.digest("SHA-256",b);
+  return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,"0")).join("");
+}
 async function doAuth(){
-  const email=$("aEmail").value.trim(), pass=$("aPass").value, name=$("aName").value.trim();
+  const email=$("aEmail").value.trim(), pass=$("aPass").value, name=$("aName").value.trim(), invite=$("aInvite").value;
   if(!email||!pass){$("authMsg").textContent="이메일과 비밀번호를 입력하세요";return;}
   if(authMode==="signup"&&!name){$("authMsg").textContent="이름을 입력하세요";return;}
+  if(authMode==="signup"&&!invite.trim()){$("authMsg").style.color="var(--danger)";$("authMsg").textContent="초대 코드를 입력하세요";return;}
   $("authBtn").disabled=true;$("authMsg").textContent="처리 중…";$("authMsg").style.color="var(--muted)";
   try{
     if(authMode==="signup"){
+      const inviteHash=await hashInvite(invite);
       const cred=await M.createUserWithEmailAndPassword(fb.auth,email,pass);
-      await M.updateProfile(cred.user,{displayName:name});
-      await M.setDoc(M.doc(fb.db,"users",cred.user.uid),{
-        name, email, createdAt:M.serverTimestamp(), lastSeen:M.serverTimestamp()
-      });
+      try{
+        await M.updateProfile(cred.user,{displayName:name});
+        await M.setDoc(M.doc(fb.db,"users",cred.user.uid),{
+          name, email, inviteHash, createdAt:M.serverTimestamp(), lastSeen:M.serverTimestamp()
+        });
+      }catch(inner){
+        // 초대 코드 불일치 등으로 문서 생성 거부 → 방금 만든 계정 롤백(고아 계정 방지)
+        await cred.user.delete().catch(()=>{});
+        throw inner;
+      }
     }else{
       await M.signInWithEmailAndPassword(fb.auth,email,pass);
     }
   }catch(e){
     $("authMsg").style.color="var(--danger)";
-    $("authMsg").textContent=authErr(e.code)||e.message;
+    $("authMsg").textContent=(e.code==="permission-denied"?"초대 코드가 올바르지 않습니다":authErr(e.code)||e.message);
     $("authBtn").disabled=false;
   }
 }
@@ -534,8 +557,10 @@ async function onLogin(user){
   const uref=M.doc(fb.db,"users",me.uid);
   let snap=await M.getDoc(uref);
   if(!snap.exists()&&!me.name){ await new Promise(r=>setTimeout(r,900)); snap=await M.getDoc(uref); }
-  if(snap.exists()){ const d=snap.data(); me.name=d.name||me.name||"나"; me.dept=d.dept||""; me.pos=d.position||""; me.phone=d.phone||""; await M.updateDoc(uref,{lastSeen:M.serverTimestamp()}); }
-  else { me.name=me.name||"나"; await M.setDoc(uref,{name:me.name,email:me.email,createdAt:M.serverTimestamp(),lastSeen:M.serverTimestamp()}); }
+  try{
+    if(snap.exists()){ const d=snap.data(); me.name=d.name||me.name||"나"; me.dept=d.dept||""; me.pos=d.position||""; me.phone=d.phone||""; await M.updateDoc(uref,{lastSeen:M.serverTimestamp()}); }
+    else { me.name=me.name||"나"; await M.setDoc(uref,{name:me.name,email:me.email,createdAt:M.serverTimestamp(),lastSeen:M.serverTimestamp()}); }
+  }catch(e){ /* 초대 코드 없이 만들어진 계정은 문서 생성이 규칙에서 거부됨 → 팀원 아님. 로그인 흐름은 계속. */ }
   $("authScreen").style.display="none";
   $("app").classList.remove("hidden");
   $("meLabel").textContent="· "+me.name;
@@ -672,25 +697,70 @@ function fileIcon(name){const e=fileExt(name);
   if(["mp4","mov","avi","mkv"].includes(e))return "🎬";
   if(["mp3","wav","m4a"].includes(e))return "🎵";
   return "📄";}
-function openFile(url,name){
-  const e=fileExt(name);
-  const office=["doc","docx","xls","xlsx","ppt","pptx"];
-  let viewer="";
-  if(e==="pdf"){
-    // 모바일 인앱은 구글 뷰어가 가장 호환성 좋음
-    viewer=isMobile()?`https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(url)}`:url;
-  }else if(office.includes(e)){
-    viewer=`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
-  }else{
-    // 미리보기 불가 → 새 탭에서 다운로드
-    window.open(url,"_blank","noopener");return;
-  }
-  $("docTitle").textContent=name||"문서";
-  $("docFrame").src=viewer;
-  $("docOpenExt").onclick=()=>window.open(url,"_blank","noopener");
-  $("docViewer").style.display="flex";
+/* CDN 라이브러리 지연 로드 (첫 열람 시 1회) */
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=()=>rej(new Error("스크립트 로드 실패: "+src));document.head.appendChild(s);});}
+let _pdfjsReady, _mammothReady;
+function ensurePdfjs(){
+  if(!_pdfjsReady) _pdfjsReady=loadScript("https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js")
+    .then(()=>{ window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js"; });
+  return _pdfjsReady;
 }
-$("docClose").onclick=()=>{$("docViewer").style.display="none";$("docFrame").src="about:blank";};
+function ensureMammoth(){
+  if(!_mammothReady) _mammothReady=loadScript("https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js");
+  return _mammothReady;
+}
+// PDF → 페이지별 캔버스 렌더 (앱 안에서 직접, 외부 뷰어 의존 X)
+async function renderPdf(url){
+  await ensurePdfjs();
+  const render=$("docRender"); render.innerHTML="";
+  const pdf=await window.pdfjsLib.getDocument(url).promise;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const cw=render.clientWidth||360;
+  for(let i=1;i<=pdf.numPages;i++){
+    const page=await pdf.getPage(i);
+    const base=page.getViewport({scale:1});
+    const scale=Math.min(2,(cw-16)/base.width);
+    const vp=page.getViewport({scale:scale*dpr});
+    const canvas=document.createElement("canvas");
+    canvas.width=vp.width; canvas.height=vp.height;
+    canvas.style.width=Math.round(vp.width/dpr)+"px";
+    render.appendChild(canvas);
+    await page.render({canvasContext:canvas.getContext("2d"),viewport:vp}).promise;
+  }
+}
+// Word(.docx) → mammoth로 HTML 변환해 표시
+async function renderDocx(url){
+  await ensureMammoth();
+  const render=$("docRender"); render.innerHTML="";
+  const buf=await (await fetch(url)).arrayBuffer();
+  const out=await window.mammoth.convertToHtml({arrayBuffer:buf});
+  const wrap=document.createElement("div"); wrap.className="docx-html";
+  wrap.innerHTML=out.value||"<p style='color:#888'>(내용이 비어 있습니다)</p>";
+  render.appendChild(wrap);
+}
+async function openFile(url,name){
+  const e=fileExt(name);
+  const office=["doc","xls","xlsx","ppt","pptx"]; // 구형 doc·엑셀·PPT는 오피스 온라인 뷰어
+  const frame=$("docFrame"), render=$("docRender"), load=$("docLoad");
+  $("docTitle").textContent=name||"문서";
+  $("docOpenExt").onclick=()=>window.open(url,"_blank","noopener");
+  frame.style.display="none"; frame.src="about:blank"; render.style.display="none"; render.innerHTML="";
+  load.style.display="flex"; load.textContent="문서를 불러오는 중…";
+  $("docViewer").style.display="flex";
+  try{
+    if(e==="pdf"){ render.style.display="block"; await renderPdf(url); load.style.display="none"; }
+    else if(e==="docx"){ render.style.display="block"; await renderDocx(url); load.style.display="none"; }
+    else if(office.includes(e)){ frame.style.display="block"; frame.src=`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`; load.style.display="none"; }
+    else { $("docViewer").style.display="none"; window.open(url,"_blank","noopener"); }
+  }catch(err){
+    console.warn("문서 열기 실패",err);
+    render.style.display="none";
+    load.style.display="flex";
+    load.innerHTML='<div style="text-align:center;color:#bbb">미리보기를 열 수 없어요.<br><button id="dlBtn" style="margin-top:12px;padding:9px 18px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:14px">다운로드해서 열기</button></div>';
+    $("dlBtn").onclick=()=>window.open(url,"_blank","noopener");
+  }
+}
+$("docClose").onclick=()=>{$("docViewer").style.display="none";$("docFrame").src="about:blank";$("docRender").innerHTML="";};
 
 async function markRead(){
   if(!curRoom)return;
