@@ -303,6 +303,7 @@ input,textarea{font-family:inherit;font-size:16px}
 <div class="overlay" id="newSheet">
   <div class="sheet">
     <h3>새 대화</h3>
+    <button class="btn" id="selfChatBtn" style="background:#334155;margin-bottom:12px">📝 나와의 채팅 (메모·파일 보관)</button>
     <div class="field"><input id="grpName" placeholder="그룹 이름 (그룹 만들 때만)"></div>
     <p style="color:var(--muted);font-size:13px;margin:0 0 6px">대화 상대를 선택하세요 (여러 명 = 그룹)</p>
     <div id="userPickList"></div>
@@ -603,8 +604,9 @@ function renderRooms(){
     const title=roomTitle(r);
     const unread=(r.unread&&r.unread[me.uid])||0;
     const isGrp=r.type==="group";
+    const isSelf=r.type==="self";
     return `<div class="room" data-id="${r.id}">
-      <div class="avatar ${isGrp?'group':''}">${isGrp?'👥':esc(initials(title))}</div>
+      <div class="avatar ${isGrp?'group':''}">${isSelf?'📝':isGrp?'👥':esc(initials(title))}</div>
       <div class="room-mid">
         <div class="room-name">${esc(title)}${isGrp?` <span style="color:var(--muted);font-size:12px;font-weight:400">${r.members.length}</span>`:''}</div>
         <div class="room-last">${esc(r.lastText||"대화를 시작하세요")}</div>
@@ -619,6 +621,7 @@ function renderRooms(){
   updateAppBadge();
 }
 function roomTitle(r){
+  if(r.type==="self")return "나와의 채팅";
   if(r.type==="group")return r.name||"그룹";
   const other=r.members.find(u=>u!==me.uid);
   return (r.memberNames&&r.memberNames[other])||"대화";
@@ -845,14 +848,30 @@ $("recBtn").onclick=async()=>{
 $("newChatBtn").onclick=()=>{
   pickSel.clear();$("grpName").value="";
   const others=allUsers.filter(u=>u.uid!==me.uid);
-  if(!others.length){toast("아직 다른 직원 계정이 없어요");return;}
-  $("userPickList").innerHTML=others.map(u=>`<div class="userpick" data-uid="${u.uid}">
-    <div class="avatar">${esc(initials(u.name))}</div><div class="nm">${esc(u.name)}<div style="font-size:12px;color:var(--muted);font-weight:400">${esc(u.email||'')}</div></div>
-    <div class="ck">✓</div></div>`).join("");
-  $("userPickList").querySelectorAll(".userpick").forEach(d=>d.onclick=()=>{
-    const u=d.dataset.uid;if(pickSel.has(u)){pickSel.delete(u);d.classList.remove("sel");}else{pickSel.add(u);d.classList.add("sel");}
-  });
+  if(!others.length){
+    $("userPickList").innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px 2px;line-height:1.6">아직 다른 직원 계정이 없어요.<br>위의 “나와의 채팅”을 쓰거나, 직원이 가입하면 여기서 대화를 시작할 수 있어요.</div>';
+  }else{
+    $("userPickList").innerHTML=others.map(u=>`<div class="userpick" data-uid="${u.uid}">
+      <div class="avatar">${esc(initials(u.name))}</div><div class="nm">${esc(u.name)}<div style="font-size:12px;color:var(--muted);font-weight:400">${esc(u.email||'')}</div></div>
+      <div class="ck">✓</div></div>`).join("");
+    $("userPickList").querySelectorAll(".userpick").forEach(d=>d.onclick=()=>{
+      const u=d.dataset.uid;if(pickSel.has(u)){pickSel.delete(u);d.classList.remove("sel");}else{pickSel.add(u);d.classList.add("sel");}
+    });
+  }
   openOv("newSheet");
+};
+// 나와의 채팅 (혼자 쓰는 방 — 메모·파일 보관)
+$("selfChatBtn").onclick=async()=>{
+  const exist=rooms.find(r=>r.type==="self"&&r.members.includes(me.uid));
+  if(exist){closeOv("newSheet");openRoom(exist.id);return;}
+  try{
+    const ref=await M.addDoc(M.collection(fb.db,"rooms"),{
+      type:"self",name:"나와의 채팅",members:[me.uid],memberNames:{[me.uid]:me.name},
+      unread:{[me.uid]:0},createdBy:me.uid,createdAt:M.serverTimestamp(),lastTime:M.serverTimestamp(),lastText:""
+    });
+    closeOv("newSheet");
+    setTimeout(()=>openRoom(ref.id),300);
+  }catch(e){toast("생성 실패: "+e.message);}
 };
 $("createChatBtn").onclick=async()=>{
   const sel=[...pickSel];if(!sel.length){toast("상대를 선택하세요");return;}
