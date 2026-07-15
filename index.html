@@ -708,9 +708,22 @@ function ensurePdfjs(){
     .then(()=>{ window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js"; });
   return _pdfjsReady;
 }
-function ensureMammoth(){
-  if(!_mammothReady) _mammothReady=loadScript("https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js");
-  return _mammothReady;
+// docx 변환은 Web Worker에서 (메인 스레드 블로킹=UI 멈춤 방지) + 25초 타임아웃
+function docxToHtml(arrayBuffer){
+  return new Promise((resolve,reject)=>{
+    const code='importScripts("https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js");'
+      +'onmessage=function(e){mammoth.convertToHtml({arrayBuffer:e.data})'
+      +'.then(function(r){postMessage({ok:true,html:r.value});})'
+      +'.catch(function(err){postMessage({ok:false,error:String((err&&err.message)||err)});});};';
+    let w;
+    try{ w=new Worker(URL.createObjectURL(new Blob([code],{type:"text/javascript"}))); }
+    catch(err){ reject(err); return; }
+    const to=setTimeout(()=>{try{w.terminate();}catch(_){}reject(new Error("변환 시간 초과"));},25000);
+    w.onmessage=function(e){clearTimeout(to);try{w.terminate();}catch(_){}
+      if(e.data&&e.data.ok)resolve(e.data.html);else reject(new Error((e.data&&e.data.error)||"변환 실패"));};
+    w.onerror=function(e){clearTimeout(to);try{w.terminate();}catch(_){}reject(new Error(e.message||"워커 오류"));};
+    w.postMessage(arrayBuffer,[arrayBuffer]);
+  });
 }
 // PDF → 페이지별 캔버스 렌더 (앱 안에서 직접, 외부 뷰어 의존 X)
 async function renderPdf(url){
@@ -733,12 +746,11 @@ async function renderPdf(url){
 }
 // Word(.docx) → mammoth로 HTML 변환해 표시
 async function renderDocx(url){
-  await ensureMammoth();
   const render=$("docRender"); render.innerHTML="";
   const buf=await (await fetch(url)).arrayBuffer();
-  const out=await window.mammoth.convertToHtml({arrayBuffer:buf});
+  const html=await docxToHtml(buf); // 워커에서 변환
   const wrap=document.createElement("div"); wrap.className="docx-html";
-  wrap.innerHTML=out.value||"<p style='color:#888'>(내용이 비어 있습니다)</p>";
+  wrap.innerHTML=html||"<p style='color:#888'>(내용이 비어 있습니다)</p>";
   render.appendChild(wrap);
 }
 async function openFile(url,name){
@@ -904,12 +916,16 @@ $("chatInfo").onclick=()=>{
     return `<div class="userpick"><div class="avatar">${esc(initials(nm))}</div><div class="nm">${esc(nm)}${u===me.uid?' <span style="color:var(--muted);font-size:12px">(나)</span>':''}</div></div>`;
   }).join("");
   $("addMemberBtn").style.display=r.type==="group"?"block":"none";
+  $("leaveBtn").textContent=r.type==="group"?"대화 나가기":"🗑 대화 삭제";
   openOv("infoSheet");
 };
 $("leaveBtn").onclick=async()=>{
-  if(!curRoom||!confirm("이 대화에서 나가시겠어요?"))return;
+  if(!curRoom)return;
+  const isGrp=curRoom.type==="group";
+  if(!confirm(isGrp?"이 대화에서 나가시겠어요?":"이 대화를 삭제할까요? 목록에서 사라집니다."))return;
   try{
     await M.updateDoc(M.doc(fb.db,"rooms",curRoom.id),{members:M.arrayRemove(me.uid)});
+    if(curRoom.type==="self"){ try{ await M.deleteDoc(M.doc(fb.db,"rooms",curRoom.id)); }catch(_){} }
     closeOv("infoSheet");backToList();
   }catch(e){toast("실패: "+e.message);}
 };
