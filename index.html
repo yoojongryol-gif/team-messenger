@@ -696,6 +696,7 @@ function fileIcon(name){const e=fileExt(name);
   if(["doc","docx"].includes(e))return "📘";
   if(["xls","xlsx","csv"].includes(e))return "📗";
   if(["ppt","pptx"].includes(e))return "📙";
+  if(["hwp","hwpx"].includes(e))return "📃";
   if(["zip","rar","7z"].includes(e))return "🗜";
   if(["mp4","mov","avi","mkv"].includes(e))return "🎬";
   if(["mp3","wav","m4a"].includes(e))return "🎵";
@@ -753,6 +754,15 @@ async function renderDocx(url){
   wrap.innerHTML=html||"<p style='color:#888'>(내용이 비어 있습니다)</p>";
   render.appendChild(wrap);
 }
+// 한글 문서(.hwp) → hwp.js로 렌더 (한글 전용 포맷, 클라이언트 파싱)
+let _hwpMod;
+async function renderHwp(url){
+  const render=$("docRender"); render.innerHTML="";
+  if(!_hwpMod) _hwpMod=await import("https://cdn.jsdelivr.net/npm/hwp.js@0.0.3/+esm");
+  const buf=new Uint8Array(await (await fetch(url)).arrayBuffer());
+  render.classList.add("hwp-wrap");
+  new _hwpMod.Viewer(render, buf);
+}
 async function openFile(url,name){
   const e=fileExt(name);
   const office=["doc","xls","xlsx","ppt","pptx"]; // 구형 doc·엑셀·PPT는 오피스 온라인 뷰어
@@ -765,6 +775,7 @@ async function openFile(url,name){
   try{
     if(e==="pdf"){ render.style.display="block"; await renderPdf(url); load.style.display="none"; }
     else if(e==="docx"){ render.style.display="block"; await renderDocx(url); load.style.display="none"; }
+    else if(e==="hwp"||e==="hwpx"){ load.textContent="한글 문서 여는 중… (조금 걸릴 수 있어요)"; render.style.display="block"; await renderHwp(url); load.style.display="none"; }
     else if(office.includes(e)){ frame.style.display="block"; frame.src=`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`; load.style.display="none"; }
     else { $("docViewer").style.display="none"; window.open(url,"_blank","noopener"); }
   }catch(err){
