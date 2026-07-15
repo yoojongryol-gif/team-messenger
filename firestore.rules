@@ -2,49 +2,60 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 로그인한 사람만 전체 접근 가능 (사내 팀 도구 기준)
+    // 로그인 + 정식 가입(users 문서 존재)한 사람만 데이터 접근 = 초대 코드로 가입한 팀원만
     function signedIn() { return request.auth != null; }
-    function isMember(room) { return request.auth.uid in room.data.members; }
+    function member() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    // 초대 코드 해시 (원문 코드는 여기에도, 앱에도 없음 — 해시만 존재)
+    // 현재 코드: jongsangsa2026  (바꾸려면: printf '%s' 'teamtalk-invite|새코드(소문자)' | openssl dgst -sha256)
+    function inviteOK() {
+      return request.resource.data.inviteHash ==
+        '482cf92a74cca9becd4071a8e706c3bf2b6f934cc2fdfa92426566159929c8a1';
+    }
 
-    // 사용자: 본인 문서만 수정, 목록은 로그인 시 조회 가능
+    // 사용자: 팀원만 목록 조회. 가입(문서 생성)은 초대 코드가 맞아야만 허용.
     match /users/{uid} {
-      allow read: if signedIn();
-      allow create, update: if request.auth.uid == uid;
+      allow read: if member();
+      allow create: if request.auth.uid == uid && inviteOK();
+      allow update: if request.auth.uid == uid
+        && request.resource.data.inviteHash == resource.data.inviteHash; // 코드 위변조 차단
       allow delete: if false;
     }
 
     // 채팅방: 멤버만 읽기/쓰기, 새 방은 본인이 멤버로 포함될 때만 생성
     match /rooms/{roomId} {
-      allow read: if signedIn() && request.auth.uid in resource.data.members;
-      allow create: if signedIn() && request.auth.uid in request.resource.data.members;
-      allow update: if signedIn() && request.auth.uid in resource.data.members;
+      allow read: if member() && request.auth.uid in resource.data.members;
+      allow create: if member() && request.auth.uid in request.resource.data.members;
+      allow update: if member() && request.auth.uid in resource.data.members;
       allow delete: if false;
 
       // 메시지: 방 멤버만 읽기, 보내는 사람=본인일 때만 생성
       match /messages/{msgId} {
-        allow read: if signedIn() &&
+        allow read: if member() &&
           request.auth.uid in get(/databases/$(database)/documents/rooms/$(roomId)).data.members;
-        allow create: if signedIn() &&
+        allow create: if member() &&
           request.auth.uid in get(/databases/$(database)/documents/rooms/$(roomId)).data.members &&
           request.resource.data.sender == request.auth.uid;
-        allow update: if signedIn() &&
+        allow update: if member() &&
           request.auth.uid in get(/databases/$(database)/documents/rooms/$(roomId)).data.members;
         allow delete: if false;
       }
     }
 
-    // 공지사항: 로그인한 직원 누구나 읽기/작성, 작성자만 수정·삭제
+    // 공지사항: 팀원만 읽기/작성, 작성자만 수정·삭제
     match /notices/{noticeId} {
-      allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.author == request.auth.uid;
-      allow update, delete: if signedIn() && resource.data.author == request.auth.uid;
+      allow read: if member();
+      allow create: if member() && request.resource.data.author == request.auth.uid;
+      allow update, delete: if member() && resource.data.author == request.auth.uid;
     }
 
-    // 팀 일정: 로그인한 직원 누구나 읽기/작성, 작성자만 수정·삭제
+    // 팀 일정: 팀원만 읽기/작성, 작성자만 수정·삭제
     match /events/{eventId} {
-      allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.author == request.auth.uid;
-      allow update, delete: if signedIn() && resource.data.author == request.auth.uid;
+      allow read: if member();
+      allow create: if member() && request.resource.data.author == request.auth.uid;
+      allow update, delete: if member() && resource.data.author == request.auth.uid;
     }
   }
 }
