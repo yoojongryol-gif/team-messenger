@@ -208,6 +208,7 @@ input,textarea{font-family:inherit;font-size:16px}
     <div class="field"><label>비밀번호</label><input id="aPass" type="password" placeholder="6자 이상" autocomplete="current-password"></div>
     <button class="btn" id="authBtn">로그인</button>
     <button class="linkbtn" id="authToggle">계정이 없으신가요? 가입하기</button>
+    <button class="linkbtn" id="authReset">비밀번호를 잊으셨나요?</button>
     <div class="authmsg" id="authMsg"></div>
   </div>
   <button class="linkbtn" id="cfgBtn" style="position:absolute;bottom:calc(20px + var(--safe-b));color:var(--muted)">⚙️ 서버 설정</button>
@@ -476,9 +477,22 @@ function renderAuthMode(){
   $("nameField").style.display = authMode==="signup"?"block":"none";
   $("authBtn").textContent = authMode==="signup"?"가입하기":"로그인";
   $("authToggle").textContent = authMode==="signup"?"이미 계정이 있으신가요? 로그인":"계정이 없으신가요? 가입하기";
+  $("authReset").style.display = authMode==="signup"?"none":"block";
   $("authMsg").textContent="";
 }
 $("authToggle").onclick=()=>{authMode=authMode==="signup"?"login":"signup";renderAuthMode();};
+$("authReset").onclick=async()=>{
+  const email=$("aEmail").value.trim();
+  if(!email){$("authMsg").style.color="var(--danger)";$("authMsg").textContent="비밀번호를 재설정할 이메일을 먼저 입력하세요";return;}
+  try{
+    await M.sendPasswordResetEmail(fb.auth,email);
+    $("authMsg").style.color="var(--accent)";
+    $("authMsg").textContent="재설정 메일을 보냈어요. 메일함(스팸함 포함)을 확인하세요.";
+  }catch(e){
+    $("authMsg").style.color="var(--danger)";
+    $("authMsg").textContent=authErr(e.code)||e.message;
+  }
+};
 
 async function doAuth(){
   const email=$("aEmail").value.trim(), pass=$("aPass").value, name=$("aName").value.trim();
