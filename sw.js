@@ -1,5 +1,5 @@
 /* 팀톡 PWA 서비스워커 — 앱 셸 캐시 + 자동 업데이트 */
-const VER = "teamtalk-v1.0.1";
+const VER = "teamtalk-v1.0.2";
 const SHELL = ["./","./index.html","./manifest.json","./apple-touch-icon.png"];
 
 self.addEventListener("install", e=>{

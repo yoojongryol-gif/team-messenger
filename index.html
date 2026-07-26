@@ -418,7 +418,7 @@ input,textarea{font-family:inherit;font-size:16px}
 /* ============================================================
    팀톡 — 업무용 메신저 (Firebase)
    ============================================================ */
-const APP_VER = "1.0.0";
+const APP_VER = "1.0.1"; // 2026-07-26 P1: 파일뷰어 CORS 근본원인 수리(PDF iframe화·docx 오피스뷰어 통합)+가입안내 정비
 
 /* ---------- Firebase 설정 (teamtalk-efb25 프로젝트, 2026-06-18 연결) ----------
    웹 설정값은 비밀이 아니라 공개용 — 보안은 firestore.rules/storage.rules로 처리 */
@@ -701,59 +701,22 @@ function fileIcon(name){const e=fileExt(name);
   if(["mp4","mov","avi","mkv"].includes(e))return "🎬";
   if(["mp3","wav","m4a"].includes(e))return "🎵";
   return "📄";}
+// ⚠️ 2026-07-26 근본원인 실측(P1-1): Firebase Storage 버킷에 CORS 설정(gsutil cors set)이 없어서
+// alt=media 실제 파일 GET 응답에 Access-Control-Allow-Origin이 빠짐(메타데이터/에러 응답엔 있어서 curl 점검으론 안 잡힘).
+// 그 결과 fetch()로 바이트를 직접 받는 렌더 방식(구 PDF.js getDocument/구 mammoth fetch/hwp.js fetch)은 전부 CORS 차단으로 실패.
+// <img>/<audio>는 네이티브 태그 로드라 CORS 무관이라 정상. PDF/DOCX는 fetch 없이 여는 방식으로 교체(아래), HWP는 fetch 없이 여는
+// 방법이 없어 폴백 유지(진짜 해결=버킷 CORS 설정, SETUP.md 관리자 메모 참조).
 /* CDN 라이브러리 지연 로드 (첫 열람 시 1회) */
 function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=()=>rej(new Error("스크립트 로드 실패: "+src));document.head.appendChild(s);});}
-let _pdfjsReady, _mammothReady;
-function ensurePdfjs(){
-  if(!_pdfjsReady) _pdfjsReady=loadScript("https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js")
-    .then(()=>{ window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js"; });
-  return _pdfjsReady;
-}
-// ⚠️ mammoth는 이 앱 페이지 메인스레드에서 변환 시 행(서비스워커/모듈 컨텍스트 충돌, 실측).
-// Worker(격리 컨텍스트)에서 돌리면 정상(168ms 실측). + 25초 타임아웃.
-function docxToHtml(arrayBuffer){
-  return new Promise((resolve,reject)=>{
-    const code='importScripts("https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js");'
-      +'onmessage=function(e){mammoth.convertToHtml({arrayBuffer:e.data})'
-      +'.then(function(r){postMessage({ok:true,html:r.value});})'
-      +'.catch(function(err){postMessage({ok:false,error:String((err&&err.message)||err)});});};';
-    let w;
-    try{ w=new Worker(URL.createObjectURL(new Blob([code],{type:"text/javascript"}))); }
-    catch(err){ reject(err); return; }
-    const to=setTimeout(()=>{try{w.terminate();}catch(_){}reject(new Error("변환 시간 초과"));},25000);
-    w.onmessage=function(e){clearTimeout(to);try{w.terminate();}catch(_){}
-      if(e.data&&e.data.ok)resolve(e.data.html);else reject(new Error((e.data&&e.data.error)||"변환 실패"));};
-    w.onerror=function(e){clearTimeout(to);try{w.terminate();}catch(_){}reject(new Error(e.message||"워커 오류"));};
-    w.postMessage(arrayBuffer,[arrayBuffer]);
-  });
-}
-// PDF → 페이지별 캔버스 렌더 (앱 안에서 직접, 외부 뷰어 의존 X)
+// PDF → iframe으로 브라우저 내장 PDF 뷰어에 그대로 로드(네비게이션이라 CORS 영향 없음, fetch 안 씀)
 async function renderPdf(url){
-  await ensurePdfjs();
-  const render=$("docRender"); render.innerHTML="";
-  const pdf=await window.pdfjsLib.getDocument(url).promise;
-  const dpr=Math.min(window.devicePixelRatio||1,2);
-  const cw=render.clientWidth||360;
-  for(let i=1;i<=pdf.numPages;i++){
-    const page=await pdf.getPage(i);
-    const base=page.getViewport({scale:1});
-    const scale=Math.min(2,(cw-16)/base.width);
-    const vp=page.getViewport({scale:scale*dpr});
-    const canvas=document.createElement("canvas");
-    canvas.width=vp.width; canvas.height=vp.height;
-    canvas.style.width=Math.round(vp.width/dpr)+"px";
-    render.appendChild(canvas);
-    await page.render({canvasContext:canvas.getContext("2d"),viewport:vp}).promise;
-  }
-}
-// Word(.docx) → mammoth로 HTML 변환해 표시
-async function renderDocx(url){
-  const render=$("docRender"); render.innerHTML="";
-  const buf=await (await fetch(url)).arrayBuffer();
-  const html=await docxToHtml(buf); // 워커에서 변환(메인스레드 행 방지)
-  const wrap=document.createElement("div"); wrap.className="docx-html";
-  wrap.innerHTML=html||"<p style='color:#888'>(내용이 비어 있습니다)</p>";
-  render.appendChild(wrap);
+  const frame=$("docFrame");
+  await new Promise((resolve)=>{
+    let done=false;
+    frame.onload=()=>{ if(done)return; done=true; resolve(); };
+    frame.src=url;
+    setTimeout(()=>{ if(done)return; done=true; resolve(); },4000); // onload 미보장 브라우저 대비 타임아웃
+  });
 }
 // 한글 문서(.hwp) → hwp.js로 렌더 (한글 전용 포맷, 클라이언트 파싱)
 let _hwpMod;
@@ -766,7 +729,7 @@ async function renderHwp(url){
 }
 async function openFile(url,name){
   const e=fileExt(name);
-  const office=["doc","xls","xlsx","ppt","pptx"]; // 구형 doc·엑셀·PPT는 오피스 온라인 뷰어
+  const office=["doc","docx","xls","xlsx","ppt","pptx"]; // 오피스 뷰어(서버가 대신 받아오므로 CORS 무관, docx도 여기로 통합 — 구 mammoth+fetch 방식은 CORS로 항상 실패해 폐기)
   const frame=$("docFrame"), render=$("docRender"), load=$("docLoad");
   $("docTitle").textContent=name||"문서";
   $("docOpenExt").onclick=()=>window.open(url,"_blank","noopener");
@@ -774,16 +737,19 @@ async function openFile(url,name){
   load.style.display="flex"; load.textContent="문서를 불러오는 중…";
   $("docViewer").style.display="flex";
   try{
-    if(e==="pdf"){ render.style.display="block"; await renderPdf(url); load.style.display="none"; }
-    else if(e==="docx"){ render.style.display="block"; await renderDocx(url); load.style.display="none"; }
+    if(e==="pdf"){ frame.style.display="block"; await renderPdf(url); load.style.display="none"; }
     else if(e==="hwp"||e==="hwpx"){ load.textContent="한글 문서 여는 중… (조금 걸릴 수 있어요)"; render.style.display="block"; await renderHwp(url); load.style.display="none"; }
     else if(office.includes(e)){ frame.style.display="block"; frame.src=`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`; load.style.display="none"; }
     else { $("docViewer").style.display="none"; window.open(url,"_blank","noopener"); }
   }catch(err){
+    // 뷰어가 실패해도 메시지 목록/파일명 표시 자체는 이 catch와 무관하게 항상 유지됨(renderMsgs는 별도) —
+    // 여기선 뷰어 오버레이 안에서 다운로드 폴백만 보장.
     console.warn("문서 열기 실패",err);
-    render.style.display="none";
+    frame.style.display="none"; render.style.display="none";
     load.style.display="flex";
-    load.innerHTML='<div style="text-align:center;color:#bbb">미리보기를 열 수 없어요.<br><button id="dlBtn" style="margin-top:12px;padding:9px 18px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:14px">다운로드해서 열기</button></div>';
+    const msg=String((err&&err.message)||err||"");
+    const corsLike=/fetch|network|cors/i.test(msg);
+    load.innerHTML=`<div style="text-align:center;color:#bbb">미리보기를 열 수 없어요.${corsLike?'<br><span style="font-size:12px;color:#888">(이 형식은 브라우저에서 바로 열람하기 어려울 수 있어요)</span>':''}<br><button id="dlBtn" style="margin-top:12px;padding:9px 18px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:14px">다운로드해서 열기</button></div>`;
     $("dlBtn").onclick=()=>window.open(url,"_blank","noopener");
   }
 }
