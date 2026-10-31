@@ -1,6 +1,6 @@
 /* 팀톡 PWA 서비스워커 — 앱 셸 캐시 + 자동 업데이트 */
-const VER = "teamtalk-v1.0.2";
-const SHELL = ["./","./index.html","./manifest.json","./apple-touch-icon.png"];
+const VER = "teamtalk-2026.11.01a"; // index.html의 APP_VER과 반드시 함께 올린다(화면 메뉴 하단 버전 표식과 같은 값)
+const SHELL = ["./","./index.html","./manifest.json","./apple-touch-icon.png","./icon-192.png","./icon-512.png","./icon-maskable-512.png"];
 
 self.addEventListener("install", e=>{
   self.skipWaiting();
@@ -16,7 +16,7 @@ self.addEventListener("fetch", e=>{
   // 같은 출처의 앱 셸만 캐시. Firebase/외부는 항상 네트워크.
   if(url.origin!==location.origin) return;
   // index.html 류는 network-first (최신 우선)
-  if(req.mode==="navigate" || url.pathname.endsWith("index.html") || url.pathname.endsWith("/")){
+  if(req.mode==="navigate" || url.pathname.endsWith("index.html") || url.pathname.endsWith("/") || url.pathname.endsWith("manifest.json")){
     e.respondWith(fetch(req).then(r=>{const cp=r.clone();caches.open(VER).then(c=>c.put(req,cp));return r;}).catch(()=>caches.match(req).then(m=>m||caches.match("./index.html"))));
     return;
   }
