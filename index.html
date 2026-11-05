@@ -17,7 +17,7 @@
   /* 2026-11-01 품질수리 7호: 차가운 네이비 → 따뜻한 갈색 다크 바탕, 악센트는 블루 1색 유지 */
   --bg:#15120f; --panel:#1e1a16; --panel2:#29231d; --line:#3a3129;
   --text:#f2ede6; --muted:#a99d8e; --accent:#3b82f6; --accent2:#2563eb;
-  --mine:#2563eb; --theirs:#2c251f; --ok:#22c55e; --danger:#ef4444;
+  --accent-soft:rgba(59,130,246,.2); --mine:#2563eb; --theirs:#2c251f; --ok:#22c55e; --danger:#ef4444;
   --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -190,20 +190,74 @@ input,textarea{font-family:inherit;font-size:16px}
 .diruser .dact{display:flex;gap:8px}
 .diruser .dact a{width:36px;height:36px;border-radius:50%;background:var(--panel2);display:flex;align-items:center;
   justify-content:center;text-decoration:none;font-size:16px}
-/* 일정 */
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:8px}
-.cal-dow{text-align:center;font-size:11px;color:var(--muted);padding:4px 0}
-.cal-cell{aspect-ratio:1;border-radius:8px;padding:4px;font-size:12px;background:var(--panel);position:relative;cursor:pointer}
-.cal-cell.other{opacity:.35}
-.cal-cell.today{outline:1px solid var(--accent)}
-.cal-cell .evd{position:absolute;bottom:4px;left:4px;right:4px;display:flex;gap:2px;flex-wrap:wrap}
-.cal-cell .evd i{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+/* 일정 — 2026-11-05 5959 일정 화면 구성(달력 칸 제목 칩·날짜 목록·인라인 폼·접는 목록)을 팀톡 테마로 옮김 */
+.cal-scroll{padding:12px 12px 32px;overscroll-behavior:contain}
+.cal-wrap{max-width:560px;margin:0 auto}
+#calRefresh{width:44px;height:44px;font-size:17px}
+.cal-err{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--danger);border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px;line-height:1.55}
+.cal-err b{display:block;font-size:14px;margin-bottom:2px}
+.cal-err button{margin-top:8px;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-weight:600}
+.cal{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:6px;margin-bottom:12px}
+.cal,.cal *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.cal-nav .m{font-weight:700;font-size:15px}
+.cal-nav button{width:44px;height:44px;border:none;border-radius:50%;background:var(--panel2);color:var(--muted);font-size:18px;display:grid;place-items:center}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+.cal-wd{text-align:center;font-size:11px;color:var(--muted);padding:4px 0}
 .cal-sun{color:#f87171}.cal-sat{color:#60a5fa}
-.evlist{padding:6px 16px 16px}
-.evitem{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
-.evitem .ed{font-weight:700;color:var(--accent);min-width:54px;font-size:13px}
-.evitem .et{font-weight:600}
-.evitem .ec{font-size:12px;color:var(--muted);margin-top:2px}
+.cal-d{min-height:48px;min-width:0;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:1px;padding:2px 1px 3px;overflow:hidden;
+  border:none;background:transparent;color:var(--text);border-radius:8px;font-size:13px;position:relative;touch-action:manipulation}
+.cal-d.blank{visibility:hidden}
+.cal-d .cd-n{flex:none;text-align:center;line-height:1.3;font-size:12.5px}
+.cal-d.past-d .cd-n{opacity:.65}
+.cal-d.today{background:var(--accent-soft)}
+.cal-d.today .cd-n{color:var(--text);font-weight:800}
+.cal-d.sel{outline:1.5px solid var(--accent);outline-offset:-1.5px}
+.cal-d .dot{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.cd-evts{flex:none;display:flex;flex-direction:column;gap:1px;min-width:0}
+.cd-ev{display:block;max-width:100%;font-size:9.5px;line-height:1.5;letter-spacing:-.03em;padding:0 2px;border-radius:3px;background:var(--accent-soft);color:var(--text);
+  font-weight:500;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cd-ev.past{background:var(--panel2);color:var(--muted)}
+.cd-more{font-size:9px;line-height:1.45;color:var(--muted);text-align:left;padding:0 2px;white-space:nowrap}
+.sec-label{font-size:12px;font-weight:700;color:var(--muted);margin:14px 0 8px 4px}
+.empty-note{text-align:center;color:var(--muted);font-size:13px;line-height:1.8;padding:16px 12px}
+.evt{display:flex;align-items:center;gap:10px;padding:10px 4px 10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:8px;min-height:56px;cursor:pointer}
+.evt:active{background:var(--panel2)}
+.evt .dd{flex:none;min-width:50px;text-align:center;font-size:12px;font-weight:700;color:var(--text);background:var(--accent-soft);border-radius:8px;padding:6px 4px}
+.evt .info{flex:1;min-width:0}
+.evt .t{font-size:14.5px;font-weight:600;line-height:1.35;word-break:break-word;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.evt .sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evt .del{flex:none;width:44px;height:44px;border:none;background:transparent;color:var(--muted);font-size:15px;border-radius:10px}
+.evt .ln{display:flex;align-items:center;gap:6px;margin-top:4px;min-width:0;font-size:12.5px;color:var(--muted)}
+.evt .ln .lb,.ed-label{flex:none;font-size:10.5px;font-weight:700;line-height:1.5;padding:0 6px;border-radius:5px;background:var(--panel2);color:var(--muted)}
+.evt .ln .tx{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evt .ln.nt{color:var(--text);font-weight:600}
+.evt .ln.nt .lb,.ed-note .ed-label{background:var(--accent2);color:#fff}
+.evt.past .t{color:var(--muted)}
+.evt.past .dd{background:var(--panel2);color:var(--muted)}
+.add-btn{display:block;width:100%;min-height:48px;margin:4px 0 8px;border-radius:13px;border:1px solid var(--line);background:var(--panel);color:var(--accent);font-weight:700;font-size:15px}
+.more-btn{display:block;width:100%;min-height:44px;margin:0 0 8px;border-radius:10px;border:1px dashed var(--line);background:transparent;color:var(--muted);font-size:13px;font-weight:600}
+.list-toggle{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;background:none;border:none;padding:0 4px;margin-top:6px;color:var(--muted);font-size:12px;font-weight:700;touch-action:manipulation}
+.list-toggle .lt-chev{flex:none;font-size:13px;transform:rotate(-90deg);transition:transform .2s}
+.list-toggle[aria-expanded="true"] .lt-chev{transform:rotate(0)}
+.list-wrap{display:none}.list-wrap.open{display:block}
+.form-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:6px 14px 14px;margin-bottom:12px}
+.form-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.form-back{min-height:44px;padding:0 10px 0 2px;background:none;border:none;color:var(--muted);font-size:14px}
+.form-head b{font-size:15px}
+.date-sum{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:11px 13px;font-size:15px;font-weight:600}
+.date-sum.none{color:var(--muted);font-weight:400}
+.field .hint{font-size:12px;color:var(--muted);margin-top:5px}
+#tabCal.picking #dayEventList,#tabCal.picking #btnToggleEvtForm,#tabCal.picking #calLists{display:none}
+#edTitle{word-break:break-word;margin-bottom:6px}
+.ed-meta{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+.ed-block{margin-bottom:14px}
+.ed-label{display:inline-block;margin-bottom:6px;font-size:11.5px;padding:1px 7px}
+.ed-text{white-space:pre-wrap;word-break:break-word;line-height:1.6}
+.ed-note{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:10px;padding:10px 12px;margin-bottom:14px}
+.ed-note .ed-text{font-weight:600}
+.ed-only{font-size:12px;color:var(--muted);text-align:center;margin:0 0 10px}
+.ed-btns .btn{margin-top:8px}
 /* 문서 뷰어 */
 #docViewer{position:fixed;inset:0;background:var(--bg);z-index:360;display:none;flex-direction:column}
 .doc-top{display:flex;align-items:center;gap:8px;padding:calc(8px + var(--safe-t)) 8px 8px;background:#000;border-bottom:1px solid var(--line)}
@@ -276,12 +330,31 @@ input,textarea{font-family:inherit;font-size:16px}
     <!-- 📅 일정 탭 -->
     <div class="tabpanel" id="tabCal" style="display:none">
       <div class="topbar">
-        <button class="iconbtn" id="calPrev">‹</button>
-        <div class="title" id="calTitle" style="text-align:center">일정</div>
-        <button class="iconbtn" id="calNext">›</button>
+        <div class="title">팀 일정</div>
+        <button class="iconbtn" id="calRefresh" aria-label="새로고침" title="새로고침">🔄</button>
       </div>
-      <div class="scroll" id="calBody"></div>
-      <button class="fab" id="newEventBtn">＋</button>
+      <div class="scroll cal-scroll" id="calScroll"><div class="cal-wrap">
+        <div class="cal-err" id="calErr" role="alert" hidden></div>
+        <div class="cal" id="calBox"></div>
+        <div id="dayEventList"></div>
+        <button class="add-btn" id="btnToggleEvtForm">＋ 일정 추가</button>
+        <div class="form-card" id="evtForm" hidden>
+          <div class="form-head"><button type="button" class="form-back" id="evtFormBack">← 닫기</button><b id="evtFormTitle">일정 추가</b></div>
+          <div class="field"><label for="evTitle">제목</label><input id="evTitle" maxlength="40" autocomplete="off" placeholder="예: 거래처 미팅"></div>
+          <div class="field"><label>날짜</label><div class="date-sum" id="evtDateSum" role="status"></div><div class="hint">위 달력에서 날짜를 누르면 바뀌어요</div></div>
+          <div class="field"><label for="evTime">시간 (선택)</label><input id="evTime" type="time"></div>
+          <div class="field"><label for="evDesc">내용 (선택)</label><textarea id="evDesc" rows="2" placeholder="장소·안건 등"></textarea></div>
+          <div class="field"><label for="evNote">특이사항 (선택)</label><textarea id="evNote" rows="2" placeholder="준비물·주의할 점 등"></textarea></div>
+          <button class="btn" id="evSave">일정 저장</button>
+          <button class="btn danger" id="evDelete" style="margin-top:10px;display:none">일정 삭제</button>
+        </div>
+        <div id="calLists">
+          <button type="button" class="list-toggle" id="btnUpcomingToggle" aria-expanded="false" aria-controls="upcomingWrap"><span id="upcomingLabel">다가오는 일정</span><span class="lt-chev" aria-hidden="true">⌄</span></button>
+          <div class="list-wrap" id="upcomingWrap"><div id="upcomingList"></div></div>
+          <button type="button" class="list-toggle" id="btnPastToggle" aria-expanded="false" aria-controls="pastWrap" style="display:none"><span id="pastLabel">이 달 지난 일정</span><span class="lt-chev" aria-hidden="true">⌄</span></button>
+          <div class="list-wrap" id="pastWrap"><div id="pastList"></div></div>
+        </div>
+      </div></div>
     </div>
     <!-- 하단 네비게이션 -->
     <nav class="bottomnav">
@@ -382,16 +455,19 @@ input,textarea{font-family:inherit;font-size:16px}
   </div>
 </div>
 
-<!-- 일정 작성 시트 -->
-<div class="overlay" id="eventWriteSheet">
+<!-- 일정 상세 시트 (전체 내용·특이사항, 작성자만 수정·삭제) -->
+<div class="overlay" id="eventDetailSheet">
   <div class="sheet">
-    <h3>일정 추가</h3>
-    <div class="field"><label>제목</label><input id="evTitle" placeholder="예: 거래처 미팅"></div>
-    <div class="field"><label>날짜</label><input id="evDate" type="date"></div>
-    <div class="field"><label>시간 (선택)</label><input id="evTime" type="time"></div>
-    <div class="field"><label>메모 (선택)</label><textarea id="evDesc" rows="3" placeholder="장소·내용 등"></textarea></div>
-    <button class="btn" id="evSave">일정 저장</button>
-    <button class="btn danger" id="evDelete" style="margin-top:10px;display:none">일정 삭제</button>
+    <h3 id="edTitle"></h3>
+    <div class="ed-meta" id="edMeta"></div>
+    <div class="ed-block" id="edDescWrap"><span class="ed-label">내용</span><div class="ed-text" id="edDesc"></div></div>
+    <div class="ed-note" id="edNoteWrap"><span class="ed-label">특이사항</span><div class="ed-text" id="edNote"></div></div>
+    <p class="ed-only" id="edOnly" style="display:none">작성자만 수정·삭제할 수 있어요</p>
+    <div class="ed-btns">
+      <button class="btn" id="edEdit">수정</button>
+      <button class="btn danger" id="edDelete">삭제</button>
+      <button class="btn ghost" id="edClose">닫기</button>
+    </div>
   </div>
 </div>
 
@@ -443,7 +519,7 @@ input,textarea{font-family:inherit;font-size:16px}
 /* ============================================================
    팀톡 — 업무용 메신저 (Firebase)
    ============================================================ */
-const APP_VER = "2026.11.01a"; // sw.js의 VER("teamtalk-"+APP_VER)과 반드시 함께 올린다. 2026-11-01 품질수리 7호(실패패널·FAULT·뒤로가기·따뜻한 바탕). 이전 1.0.1=파일뷰어 CORS 수리
+const APP_VER = "2026.11.05a"; // sw.js의 VER("teamtalk-"+APP_VER)과 반드시 함께 올린다. 2026-11-05 일정 화면 5959식 개편+특이사항(note). 2026-11-01 품질수리 7호(실패패널·FAULT·뒤로가기·따뜻한 바탕). 이전 1.0.1=파일뷰어 CORS 수리
 
 /* ---------- Firebase 설정 (teamtalk-efb25 프로젝트, 2026-06-18 연결) ----------
    웹 설정값은 비밀이 아니라 공개용 — 보안은 firestore.rules/storage.rules로 처리 */
@@ -1172,80 +1248,282 @@ async function dmWith(uid){
 }
 
 /* ============================================================
-   일정 공유 (팀 캘린더)
+   일정 공유 (팀 캘린더) — 2026-11-05 5959 일정 화면 방식으로 개편
+   달력 칸에 제목 칩 / 날짜 탭=그 날 목록 / 폼이 열린 동안 달력=날짜 선택기 / 다가오는 일정 접기
+   저장 필드: title·date·time·desc(내용)·note(특이사항, 선택)·author·authorName·createdAt
    ============================================================ */
-let events=[], unsubEvents=null, calYM=null;
+const CAL_TITLE_MAX=3, DAY_MAX=4, UP_PAGE=12, UP_LIMIT_STEP=100;
+const UP_OPEN_KEY="tt.pref.upcomingOpen";
+const WD=["일","월","화","수","목","금","토"];
+let events=[], unsubEvents=null, calYM=null, _evKey="", _monthLoaded=false;
+let upEvents=[], unsubUp=null, _upLoaded=false, _upLimit=UP_LIMIT_STEP, _upShow=UP_PAGE;
+let _selDate=null, _dayAll=false, _pastOpen=false, _refreshing=false;
+let _picking=false, _evtDate=null, curEvent=null, _detailId=null, _saving=false;
+
 function ymKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
-function watchEventsMonth(){
+function todayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
+function ymdParts(ds){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(ds||"");return m?new Date(+m[1],+m[2]-1,+m[3]):null;}
+function fmtDateK(ds){const d=ymdParts(ds);return d?`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${WD[d.getDay()]})`:"";}
+function fmtMD(ds){const d=ymdParts(ds);return d?`${d.getMonth()+1}/${d.getDate()}`:"";}
+function ddLabel(ds){const d=ymdParts(ds),t=ymdParts(todayStr());if(!d)return "";const n=Math.round((d-t)/86400000);return n===0?"오늘":n>0?"D-"+n:"D+"+(-n);}
+function evSort(a,b){return String(a.date||"").localeCompare(String(b.date||""))||String(a.time||"").localeCompare(String(b.time||""))||String(a.id).localeCompare(String(b.id));}
+function evById(id){return events.find(e=>e.id===id)||upEvents.find(e=>e.id===id)||null;}
+
+/* ---- 구독: 달력=보고 있는 달, 다가오는 일정=오늘 이후(읽기 전용 질의 추가, 저장 구조 무관) ---- */
+function calErr(e){
+  const box=$("calErr");
+  if(!e){box.hidden=true;box.innerHTML="";return;}
+  box.innerHTML=`<b>일정을 불러오지 못했어요</b>${esc(failReason(e))}<br><button type="button" id="calErrRetry">다시 시도</button>`;
+  box.hidden=false;$("calErrRetry").onclick=refreshCal;
+}
+function afterLoad(){if(_refreshing&&_monthLoaded&&_upLoaded){_refreshing=false;toast("새로고침했어요");}}
+function watchEventsMonth(force){
+  const key=ymKey(calYM);
+  if(unsubEvents&&key===_evKey&&!force)return;
   if(unsubEvents)unsubEvents();
-  const start=`${ymKey(calYM)}-00`, end=`${ymKey(calYM)}-99`;
-  const q=M.query(M.collection(fb.db,"events"),M.where("date",">=",start),M.where("date","<=",end));
-  unsubEvents=M.onSnapshot(q,snap=>{events=snap.docs.map(d=>({id:d.id,...d.data()}));drawCal();},err=>{console.warn(err);});
+  if(key!==_evKey){events=[];_monthLoaded=false;}
+  _evKey=key;
+  const q=M.query(M.collection(fb.db,"events"),M.where("date",">=",`${key}-00`),M.where("date","<=",`${key}-99`));
+  unsubEvents=M.onSnapshot(q,snap=>{
+    events=snap.docs.map(d=>({id:d.id,...d.data()}));_monthLoaded=true;calErr(null);drawCal();afterLoad();
+  },err=>{console.warn(err);unsubEvents=null;_refreshing=false;calErr(err);});
+}
+function watchUpcoming(force){
+  if(unsubUp&&!force)return;
+  if(unsubUp)unsubUp();
+  const q=M.query(M.collection(fb.db,"events"),M.where("date",">=",todayStr()),M.orderBy("date"),M.limit(_upLimit));
+  unsubUp=M.onSnapshot(q,snap=>{
+    upEvents=snap.docs.map(d=>({id:d.id,...d.data()}));_upLoaded=true;calErr(null);drawCal();afterLoad();
+  },err=>{console.warn(err);unsubUp=null;_upLoaded=true;_refreshing=false;calErr(err);drawCal();});
 }
 function renderEventsMonth(){
   if(!calYM)calYM=new Date(new Date().getFullYear(),new Date().getMonth(),1);
-  watchEventsMonth();drawCal();
+  if(_selDate===null&&!_picking&&ymKey(calYM)===todayStr().slice(0,7))_selDate=todayStr();
+  watchEventsMonth();watchUpcoming();drawCal();
 }
+function refreshCal(){_refreshing=true;calErr(null);watchEventsMonth(true);watchUpcoming(true);}
+$("calRefresh").onclick=refreshCal;
+function moveMonth(delta){
+  calYM=new Date(calYM.getFullYear(),calYM.getMonth()+delta,1);
+  if(!_picking){_selDate=ymKey(calYM)===todayStr().slice(0,7)?todayStr():null;_dayAll=false;}
+  renderEventsMonth();
+}
+
+/* ---- 화면 ---- */
 function drawCal(){
-  const y=calYM.getFullYear(),m=calYM.getMonth();
-  $("calTitle").textContent=`${y}년 ${m+1}월`;
-  const first=new Date(y,m,1),startDow=first.getDay(),days=new Date(y,m+1,0).getDate();
-  const prevDays=new Date(y,m,0).getDate();
-  const today=new Date(),tStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-  const evByDay={};events.forEach(e=>{(evByDay[e.date]=evByDay[e.date]||[]).push(e);});
-  const dows=["일","월","화","수","목","금","토"];
-  let cells="";
-  for(let i=0;i<startDow;i++){const d=prevDays-startDow+1+i;cells+=`<div class="cal-cell other">${d}</div>`;}
+  if(!calYM)return;
+  renderCalendar();renderDayList();renderUpcoming();renderPast();
+  if(_detailId){const ev=evById(_detailId);if(ev)fillDetail(ev);else if(_monthLoaded&&_upLoaded)closeDetail();}
+}
+function renderCalendar(){
+  const y=calYM.getFullYear(),m=calYM.getMonth(),startWd=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(),tStr=todayStr();
+  const byDay={};events.forEach(e=>{(byDay[e.date]=byDay[e.date]||[]).push(e);});
+  let h=`<div class="cal-nav"><button type="button" data-cal-move="-1" aria-label="이전 달">‹</button><span class="m">${y}년 ${m+1}월</span><button type="button" data-cal-move="1" aria-label="다음 달">›</button></div><div class="cal-grid">`;
+  WD.forEach((w,i)=>h+=`<div class="cal-wd ${i===0?"cal-sun":i===6?"cal-sat":""}">${w}</div>`);
+  for(let i=0;i<startWd;i++)h+='<div class="cal-d blank"></div>';
   for(let d=1;d<=days;d++){
-    const ds=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-    const dow=new Date(y,m,d).getDay();
-    const cls=dow===0?"cal-sun":dow===6?"cal-sat":"";
-    const evs=evByDay[ds]||[];
-    cells+=`<div class="cal-cell ${ds===tStr?'today':''}" data-d="${ds}"><span class="${cls}">${d}</span>${evs.length?`<div class="evd">${evs.slice(0,4).map(()=>'<i></i>').join("")}</div>`:''}</div>`;
+    const ds=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`,dow=(startWd+d-1)%7;
+    const list=(byDay[ds]||[]).slice().sort(evSort),past=ds<tStr;
+    const isSel=_picking?_evtDate===ds:_selDate===ds;
+    let inner="";
+    if(_picking){if(list.length)inner='<span class="dot"></span>';}
+    else if(list.length){
+      inner='<span class="cd-evts">'+list.slice(0,CAL_TITLE_MAX).map(e=>`<span class="cd-ev${past?" past":""}">${esc(e.title)}</span>`).join("")
+        +(list.length>CAL_TITLE_MAX?`<span class="cd-more">+${list.length-CAL_TITLE_MAX}</span>`:"")+"</span>";
+    }
+    h+=`<button type="button" class="cal-d${ds===tStr?" today":""}${past?" past-d":""}${isSel?" sel":""}" data-day="${ds}" aria-label="${m+1}월 ${d}일${list.length?`, 일정 ${list.length}건`:""}"><span class="cd-n ${dow===0?"cal-sun":dow===6?"cal-sat":""}">${d}</span>${inner}</button>`;
   }
-  const grid=`<div class="cal-grid">${dows.map((w,i)=>`<div class="cal-dow ${i===0?'cal-sun':i===6?'cal-sat':''}">${w}</div>`).join("")}${cells}</div>`;
-  // 이번 달 일정 목록
-  const sorted=[...events].sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
-  const list=sorted.length?`<div class="evlist">${sorted.map(e=>`<div class="evitem" data-id="${e.id}">
-      <div class="ed">${(+e.date.slice(5,7))}/${(+e.date.slice(8,10))}${e.time?`<br><span style="font-weight:400">${esc(e.time)}</span>`:""}</div>
-      <div style="flex:1"><div class="et">${esc(e.title)}</div>${e.desc?`<div class="ec">${esc(e.desc)}</div>`:""}<div class="ec">${esc(e.authorName||"")}</div></div>
-    </div>`).join("")}</div>`:'<div class="empty">이번 달 일정이 없어요.<br>＋ 버튼 또는 날짜를 눌러 추가하세요.</div>';
-  $("calBody").innerHTML=grid+list;
-  $("calBody").querySelectorAll(".cal-cell[data-d]").forEach(c=>c.onclick=()=>openEvent(null,c.dataset.d));
-  $("calBody").querySelectorAll(".evitem").forEach(it=>it.onclick=()=>openEvent(it.dataset.id));
+  $("calBox").innerHTML=h+"</div>";
 }
-$("calPrev").onclick=()=>{calYM=new Date(calYM.getFullYear(),calYM.getMonth()-1,1);renderEventsMonth();};
-$("calNext").onclick=()=>{calYM=new Date(calYM.getFullYear(),calYM.getMonth()+1,1);renderEventsMonth();};
-let curEvent=null;
-function todayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
-$("newEventBtn").onclick=()=>openEvent(null,todayStr());
-function openEvent(id,date){
-  curEvent=id?events.find(e=>e.id===id):null;
-  if(curEvent){
-    $("evTitle").value=curEvent.title||"";$("evDate").value=curEvent.date||"";$("evTime").value=curEvent.time||"";$("evDesc").value=curEvent.desc||"";
-    $("evDelete").style.display=curEvent.author===me.uid?"block":"none";
+/* 목록 카드: 긴 제목·내용·특이사항은 줄임, 탭하면 상세에서 전체 표시. mode: up(D-n)/day(시간)/past(날짜) */
+function evtCard(e,mode){
+  const mine=me&&e.author===me.uid,past=String(e.date||"")<todayStr();
+  const badge=mode==="day"?(e.time?esc(e.time):"종일"):mode==="past"?fmtMD(e.date):ddLabel(e.date);
+  const sub=(mode==="day"?[e.authorName]:[fmtDateK(e.date),e.time,e.authorName]).filter(Boolean).join(" · ");
+  const desc=(e.desc||"").trim(),note=(e.note||"").trim();
+  return `<div class="evt${past?" past":""}" data-ev="${esc(e.id)}" role="button" tabindex="0">
+    <div class="dd">${badge}</div>
+    <div class="info"><div class="t">${esc(e.title)}</div>${sub?`<div class="sub">${esc(sub)}</div>`:""}
+      ${desc?`<div class="ln"><span class="lb">내용</span><span class="tx">${esc(desc)}</span></div>`:""}
+      ${note?`<div class="ln nt"><span class="lb">특이사항</span><span class="tx">${esc(note)}</span></div>`:""}
+    </div>
+    ${mine?`<button type="button" class="del" data-del="${esc(e.id)}" aria-label="삭제">✕</button>`:""}
+  </div>`;
+}
+function renderDayList(){
+  const el=$("dayEventList");
+  if(!_selDate||_selDate.slice(0,7)!==_evKey){el.innerHTML="";return;}
+  const list=events.filter(e=>e.date===_selDate).sort(evSort);
+  const shown=_dayAll?list:list.slice(0,DAY_MAX);
+  el.innerHTML=`<div class="sec-label">${fmtDateK(_selDate)}의 일정${list.length?` (${list.length})`:""}</div>`
+    +(list.length?shown.map(e=>evtCard(e,"day")).join(""):(_monthLoaded?'<div class="empty-note">이 날 일정이 없어요</div>':'<div class="empty-note">불러오는 중…</div>'))
+    +(list.length>shown.length?`<button type="button" class="more-btn" id="dayMore">${list.length-shown.length}건 더 보기</button>`:"");
+}
+function renderUpcoming(){
+  const t=todayStr(),items=upEvents.filter(e=>String(e.date||"")>=t).sort(evSort);
+  const capped=upEvents.length>=_upLimit;
+  $("upcomingLabel").textContent=`다가오는 일정 (${_upLoaded?items.length+(capped?"+":""):"…"})`;
+  const el=$("upcomingList");
+  if(!_upLoaded){el.innerHTML='<div class="empty-note">불러오는 중…</div>';return;}
+  if(!items.length){el.innerHTML='<div class="empty-note">다가오는 일정이 없어요.<br>＋ 일정 추가로 등록해 보세요.</div>';return;}
+  el.innerHTML=items.slice(0,_upShow).map(e=>evtCard(e,"up")).join("")
+    +((items.length>_upShow||capped)?'<button type="button" class="more-btn" id="upMore">더 보기</button>':"");
+}
+function renderPast(){
+  const t=todayStr(),items=events.filter(e=>String(e.date||"")<t).sort((a,b)=>evSort(b,a));
+  $("btnPastToggle").style.display=items.length?"":"none";
+  $("pastLabel").textContent=`${calYM.getMonth()+1}월 지난 일정 (${items.length})`;
+  $("btnPastToggle").setAttribute("aria-expanded",_pastOpen?"true":"false");
+  $("pastWrap").classList.toggle("open",_pastOpen&&items.length>0);
+  $("pastList").innerHTML=_pastOpen?items.map(e=>evtCard(e,"past")).join(""):"";
+}
+function upOpen(){try{return localStorage.getItem(UP_OPEN_KEY)==="1";}catch(e){return false;}}
+function applyUpOpen(v){$("upcomingWrap").classList.toggle("open",v);$("btnUpcomingToggle").setAttribute("aria-expanded",v?"true":"false");}
+$("btnUpcomingToggle").onclick=()=>{const v=!$("upcomingWrap").classList.contains("open");try{localStorage.setItem(UP_OPEN_KEY,v?"1":"0");}catch(e){}applyUpOpen(v);};
+applyUpOpen(upOpen());
+$("btnPastToggle").onclick=()=>{_pastOpen=!_pastOpen;renderPast();};
+
+/* 화면 탭은 위임 하나로 처리 */
+$("calScroll").addEventListener("click",ev=>{
+  const c=ev.target.closest("button,[data-ev]");if(!c)return;
+  if(c.dataset.calMove){moveMonth(+c.dataset.calMove);return;}
+  if(c.dataset.day){tapDay(c.dataset.day);return;}
+  if(c.dataset.del){deleteEvent(c.dataset.del);return;}
+  if(c.id==="dayMore"){_dayAll=true;renderDayList();return;}
+  if(c.id==="upMore"){
+    _upShow+=UP_PAGE;
+    if(_upShow>upEvents.length&&upEvents.length>=_upLimit){_upLimit+=UP_LIMIT_STEP;watchUpcoming(true);}else renderUpcoming();
+    return;
+  }
+  if(c.dataset.ev)openDetail(c.dataset.ev);
+});
+$("calScroll").addEventListener("keydown",ev=>{
+  if((ev.key==="Enter"||ev.key===" ")&&ev.target.dataset&&ev.target.dataset.ev){ev.preventDefault();openDetail(ev.target.dataset.ev);}
+});
+function tapDay(ds){
+  if(_picking){_evtDate=ds;renderCalendar();renderDateSum();return;}
+  _selDate=ds;_dayAll=false;renderCalendar();renderDayList();
+  const lab=$("dayEventList").querySelector(".sec-label");
+  if(lab){const sc=$("calScroll").getBoundingClientRect(),r=lab.getBoundingClientRect();
+    if(r.top+90>sc.bottom)$("calScroll").scrollTop+=r.top+150-sc.bottom;}
+}
+
+/* ---- 상세 시트: 긴 글 전체, 내용·특이사항 라벨 구분 ---- */
+function fillDetail(ev){
+  $("edTitle").textContent=ev.title||"";
+  $("edMeta").textContent=[fmtDateK(ev.date),ev.time,ev.authorName&&("작성 "+ev.authorName)].filter(Boolean).join(" · ");
+  const desc=(ev.desc||"").trim(),note=(ev.note||"").trim();
+  $("edDesc").textContent=desc;$("edDescWrap").style.display=desc?"":"none";
+  $("edNote").textContent=note;$("edNoteWrap").style.display=note?"":"none";
+  const mine=me&&ev.author===me.uid;
+  $("edEdit").style.display=mine?"":"none";$("edDelete").style.display=mine?"":"none";$("edOnly").style.display=mine?"none":"";
+}
+function openDetail(id){
+  const ev=evById(id);if(!ev)return;
+  _detailId=id;fillDetail(ev);openOv("eventDetailSheet");
+  history.pushState({tab:"tabCal",ev:"detail"},"");
+}
+function hideDetail(){_detailId=null;closeOv("eventDetailSheet");}
+function evBackIf(kind){const s=history.state;if(s&&s.ev===kind)history.back();}
+function closeDetail(){if(!_detailId)return;hideDetail();evBackIf("detail");}
+$("edClose").onclick=closeDetail;
+$("edEdit").onclick=()=>{
+  const ev=_detailId&&evById(_detailId);if(!ev)return;
+  hideDetail();
+  if(history.state&&history.state.ev==="detail")history.replaceState({tab:"tabCal",ev:"form"},"");else history.pushState({tab:"tabCal",ev:"form"},"");
+  showForm(ev);
+};
+$("edDelete").onclick=()=>{if(_detailId)deleteEvent(_detailId);};
+
+/* ---- 입력 폼: 달력 바로 아래, 열린 동안 위 달력이 날짜 선택기 ---- */
+function renderDateSum(){
+  const el=$("evtDateSum");el.textContent=_evtDate?fmtDateK(_evtDate):"위 달력에서 날짜를 눌러 주세요";el.classList.toggle("none",!_evtDate);
+}
+function showForm(ev){
+  curEvent=ev||null;_picking=true;
+  if(ev){
+    _evtDate=ev.date||null;
+    const d=ymdParts(ev.date);if(d)calYM=new Date(d.getFullYear(),d.getMonth(),1);
+    $("evTitle").value=ev.title||"";$("evTime").value=ev.time||"";$("evDesc").value=ev.desc||"";$("evNote").value=ev.note||"";
   }else{
-    $("evTitle").value="";$("evDate").value=date||todayStr();$("evTime").value="";$("evDesc").value="";
-    $("evDelete").style.display="none";
+    _evtDate=_selDate;
+    $("evTitle").value="";$("evTime").value="";$("evDesc").value="";$("evNote").value="";
   }
-  openOv("eventWriteSheet");
+  $("evtFormTitle").textContent=ev?"일정 수정":"일정 추가";
+  $("evSave").textContent=ev?"수정하기":"일정 저장";
+  $("evDelete").style.display=ev&&ev.author===me.uid?"block":"none";
+  $("evtForm").hidden=false;$("tabCal").classList.add("picking");
+  renderDateSum();renderEventsMonth();
+  $("calScroll").scrollTop=0;
 }
+function hideForm(){
+  _picking=false;curEvent=null;_evtDate=null;
+  $("evtForm").hidden=true;$("tabCal").classList.remove("picking");
+  $("calScroll").style.paddingBottom="";
+  if(calYM)drawCal();
+}
+function closeForm(){if(!_picking)return;hideForm();evBackIf("form");}
+$("btnToggleEvtForm").onclick=()=>{showForm(null);history.pushState({tab:"tabCal",ev:"form"},"");};
+$("evtFormBack").onclick=closeForm;
 $("evSave").onclick=async()=>{
-  const title=$("evTitle").value.trim(),date=$("evDate").value;
-  if(!title||!date){toast("제목과 날짜를 입력하세요");return;}
+  if(_saving)return;
+  const title=$("evTitle").value.trim(),date=_evtDate;
+  if(!title){toast("제목을 입력하세요");$("evTitle").focus();return;}
+  if(!date){toast("달력에서 날짜를 눌러 주세요");$("calScroll").scrollTop=0;return;}
+  const note=$("evNote").value.trim();
   const data={title,date,time:$("evTime").value||"",desc:$("evDesc").value.trim()};
   const ev=curEvent;
+  /* 특이사항은 선택 필드: 있을 때만 저장, 수정에서 비우면 필드 자체를 지운다 */
+  if(ev)data.note=note||M.deleteField();else if(note)data.note=note;
+  _saving=true;$("evSave").disabled=true;
   await guardWrite("일정을 저장하지 못했어요",async()=>{
+    if(!navigator.onLine){const oe=new Error("offline");oe.code="unavailable";throw oe;}
     if(ev)await M.updateDoc(M.doc(fb.db,"events",ev.id),data);
     else await M.addDoc(M.collection(fb.db,"events"),{...data,author:me.uid,authorName:me.name,createdAt:M.serverTimestamp()});
-    closeOv("eventWriteSheet");toast("일정을 저장했어요");
+    closeForm();
+    _selDate=date;_dayAll=false;
+    const d=ymdParts(date);calYM=new Date(d.getFullYear(),d.getMonth(),1);renderEventsMonth();
+    toast("일정을 저장했어요");
   },"일정이 저장되지 않았어요. 입력한 내용은 그대로 남아 있어요.");
+  _saving=false;$("evSave").disabled=false;
 };
-$("evDelete").onclick=async()=>{
-  if(!curEvent||!confirm("이 일정을 삭제할까요?"))return;
-  const eid=curEvent.id;
-  await guardWrite("일정을 삭제하지 못했어요",async()=>{await M.deleteDoc(M.doc(fb.db,"events",eid));closeOv("eventWriteSheet");toast("삭제했어요");});
-};
+async function deleteEvent(id){
+  if(!confirm("이 일정을 삭제할까요?"))return;
+  await guardWrite("일정을 삭제하지 못했어요",async()=>{
+    if(!navigator.onLine){const oe=new Error("offline");oe.code="unavailable";throw oe;}
+    await M.deleteDoc(M.doc(fb.db,"events",id));
+    if(_detailId===id)closeDetail();
+    if(curEvent&&curEvent.id===id)closeForm();
+    toast("삭제했어요");
+  });
+}
+$("evDelete").onclick=()=>{if(curEvent)deleteEvent(curEvent.id);};
+
+/* ---- 뒤로가기 연결(popstate에서 호출) ---- */
+function evOpenKind(){return curTab!=="tabCal"?null:_picking?"form":_detailId?"detail":null;}
+function evSyncNav(st){
+  if(_detailId&&st.ev!=="detail")hideDetail();
+  if(_picking&&st.tab==="tabCal"&&st.ev!=="form")hideForm();
+}
+
+/* ---- 키보드가 입력칸을 가리지 않게: 스크롤 영역 아래 여백 확보 후 포커스 칸을 보이는 영역으로 ---- */
+function calKbFit(){
+  if(!_picking)return;
+  const vv=window.visualViewport,sc=$("calScroll");
+  const kb=vv?Math.max(0,window.innerHeight-vv.height-vv.offsetTop):0;
+  sc.style.paddingBottom=kb>0?(kb+32)+"px":"";
+  const a=document.activeElement;
+  if(!a||!$("evtForm").contains(a)||!/^(INPUT|TEXTAREA)$/.test(a.tagName))return;
+  const sr=sc.getBoundingClientRect(),r=a.getBoundingClientRect();
+  const bottom=Math.min(vv?vv.height+vv.offsetTop:window.innerHeight,sr.bottom)-12;
+  if(r.bottom>bottom)sc.scrollTop+=r.bottom-bottom;
+  else if(r.top<sr.top+8)sc.scrollTop-=sr.top+8-r.top;
+}
+$("evtForm").addEventListener("focusin",()=>{calKbFit();setTimeout(calKbFit,120);setTimeout(calKbFit,350);});
+if(window.visualViewport)window.visualViewport.addEventListener("resize",calKbFit);
+window.addEventListener("resize",calKbFit);
+/* 앱을 켜 둔 채 날짜가 바뀌어도 '오늘' 표시·다가오는 일정 기준이 맞도록 복귀 시 다시 그림 */
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&me&&curTab==="tabCal")drawCal();});
 
 /* ============================================================
    앱 잠금 + Face ID (마이플래너/식단운동에서 재사용)
@@ -1313,7 +1591,7 @@ document.addEventListener("visibilitychange",()=>{
    ============================================================ */
 function openOv(id){$(id).classList.add("on");}
 function closeOv(id){$(id).classList.remove("on");}
-document.querySelectorAll(".overlay").forEach(o=>o.onclick=e=>{if(e.target===o)o.classList.remove("on");});
+document.querySelectorAll(".overlay").forEach(o=>o.onclick=e=>{if(e.target!==o)return;if(o.id==="eventDetailSheet")closeDetail();else o.classList.remove("on");});
 
 /* ============================================================
    서버 설정
@@ -1359,9 +1637,13 @@ async function boot(){
 /* 뒤로가기: 실패 패널 → 열린 시트 → 대화방 → 이전 탭 순으로 닫힘 (2026-11-01 7호) */
 history.replaceState({tab:"tabChat"},"");
 window.addEventListener("popstate",e=>{
-  if(_fail)hideFail();
-  document.querySelectorAll(".overlay.on").forEach(o=>o.classList.remove("on"));
   const st=e.state||{tab:"tabChat"};
+  if(_fail){hideFail();
+    /* 일정 폼·상세 위에 실패 패널이 있으면 뒤로가기는 패널만 닫는다(입력 내용 보존) */
+    const k=evOpenKind();if(k&&st.ev!==k){history.pushState({tab:"tabCal",ev:k},"");return;}
+  }
+  document.querySelectorAll(".overlay.on").forEach(o=>o.classList.remove("on"));
+  evSyncNav(st);
   if(curRoom&&!st.room)backToList(true);
   switchTab(st.tab||"tabChat",true);
 });

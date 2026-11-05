@@ -1,5 +1,5 @@
 /* 팀톡 PWA 서비스워커 — 앱 셸 캐시 + 자동 업데이트 */
-const VER = "teamtalk-2026.11.01a"; // index.html의 APP_VER과 반드시 함께 올린다(화면 메뉴 하단 버전 표식과 같은 값)
+const VER = "teamtalk-2026.11.05a"; // index.html의 APP_VER과 반드시 함께 올린다(화면 메뉴 하단 버전 표식과 같은 값)
 const SHELL = ["./","./index.html","./manifest.json","./apple-touch-icon.png","./icon-192.png","./icon-512.png","./icon-maskable-512.png"];
 
 self.addEventListener("install", e=>{
