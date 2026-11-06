@@ -5,7 +5,7 @@
 
 > ✅ Firebase 셋업(프로젝트 teamtalk-efb25, 로그인·DB·저장소·보안규칙)은 **이미 완료**되어 있습니다.
 > 직원들은 위 주소에서 **가입(이름·이메일·비번 + 회사 초대 코드)** 하면 바로 서로 대화·공지·일정 사용 가능합니다.
-> ⚠️ **초대 코드가 있어야 가입됩니다** — 사장님이 직원에게 별도로 코드를 전달해 주세요(이 문서에는 코드 값을 적지 않습니다. 코드는 firestore.rules 파일 상단 주석에서 관리자가 직접 확인).
+> ⚠️ **초대 코드가 있어야 가입됩니다** — 사장님이 직원에게 별도로 코드를 전달해 주세요(이 문서에는 코드 값을 적지 않습니다. 코드 원문은 저장소 밖 사장님 PC `C:/종합상사/data/private/teamtalk_invite.txt`에만 보관 — 공개 저장소라 rules에는 해시만).
 
 ---
 
@@ -47,7 +47,8 @@
 - 설정값은 index.html `EMBEDDED_CONFIG`에 내장(웹 config는 공개용, 보안은 규칙으로).
 - 데이터: Firestore(서울) — users / rooms+messages / notices / events. Storage: chat/{roomId}/...
 - 배포: GitHub Pages (repo yoojongryol-gif/team-messenger, 로컬 C:\Users\NHNE\team-messenger). 푸시하면 자동 반영.
-- 가입: 초대 코드 게이트 있음(firestore.rules `inviteOK()`). 코드는 firestore.rules 파일 상단 주석에만 존재(원문은 앱/이 문서 어디에도 없음).
+- 가입: 초대 코드 게이트 있음(firestore.rules `inviteOK()`). rules에는 해시만, 원문은 저장소 밖 `C:/종합상사/data/private/teamtalk_invite.txt`(2026-11-06 교체, 구 코드는 rules 게시 후 가입 불가·기존 회원 영향 없음).
+- 관리자 모드(2026-11-06): 관리자=UID 1개(`index.html` ADMIN_UID + `firestore.rules` isAdmin(), 같은 자리표시자를 실제 UID로 치환 후 rules 게시). 남의 일정·공지 수정·삭제, 메뉴 → 회원 관리에서 내보내기(users.disabled=true, 문서 삭제 아님).
 - **알려진 제한 — HWP 파일 인앱 미리보기 (2026-07-26 실측)**: 원인은 hwp.js 라이브러리 문제가 아니라 **Firebase Storage 버킷에 CORS 설정이 없어서** 파일 바이트를 직접 받아오는(`fetch()`) 방식이 전부 브라우저에서 CORS 차단됨. PDF·docx는 fetch 없이 여는 방식(iframe/오피스뷰어)으로 우회했지만, HWP는 마땅한 우회 뷰어가 없어 여전히 "미리보기 실패 + 다운로드 버튼" 폴백만 동작. **진짜 해결하려면**(선택) 아래 명령 1회 실행 필요(gcloud/gsutil 설치 + teamtalk-efb25 프로젝트 소유자 계정 로그인 필요, 사장님 액션):
   ```
   gsutil cors set cors.json gs://teamtalk-efb25.firebasestorage.app

@@ -159,6 +159,24 @@ input,textarea{font-family:inherit;font-size:16px}
 .menu-item{display:flex;align-items:center;gap:12px;padding:14px 6px;border-bottom:1px solid var(--line);font-size:15px}
 .menu-item:active{opacity:.6}
 .menu-item .ic{font-size:20px;width:26px;text-align:center}
+/* 관리자 모드 (2026-11-06): 작은 '관리자' 표식 + 회원 관리 시트 */
+.adminTag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:8px;font-size:11px;font-weight:700;
+  color:var(--accent);background:var(--accent-soft);vertical-align:2px}
+.adminTag[hidden]{display:none}
+.mbhead{font-size:12px;color:var(--muted);margin:14px 2px 2px}
+.mbrow{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line)}
+.mbrow .avatar{width:40px;height:40px;border-radius:12px;font-size:16px;flex:none}
+.mbrow .mi{flex:1;min-width:0}
+.mbrow .mn{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mbrow .ms{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mbrow .mact{flex:none;background:transparent;border:1px solid var(--danger);color:var(--danger);border-radius:10px;
+  padding:8px 12px;font-size:13px;font-weight:600;min-height:38px}
+.mbrow .mact.back{border-color:var(--line);color:var(--text)}
+.mbrow .mself{flex:none;font-size:12px;color:var(--muted)}
+.mbrow.off .avatar,.mbrow.off .mi{opacity:.55}
+.kickbox{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px;
+  line-height:1.6;color:var(--muted);margin-bottom:8px;word-break:break-word}
+.kickbox b{color:var(--text)}
 .typing{font-size:12px;color:var(--accent);padding:0 16px 6px}
 /* 하단 탭 네비 */
 .tabpanel{flex:1;display:flex;flex-direction:column;min-height:0;position:relative}
@@ -310,7 +328,7 @@ input,textarea{font-family:inherit;font-size:16px}
     <!-- 💬 채팅 탭 -->
     <div class="tabpanel" id="tabChat">
       <div class="topbar">
-        <div class="title">팀톡 <span class="sub" id="meLabel"></span></div>
+        <div class="title">팀톡 <span class="sub" id="meLabel"></span><span class="adminTag" id="adminTag" hidden>관리자</span></div>
         <button class="iconbtn" id="menuBtn">⋮</button>
       </div>
       <div class="scroll" id="roomList"></div>
@@ -409,6 +427,7 @@ input,textarea{font-family:inherit;font-size:16px}
     <div class="menu-item" id="mLock"><span class="ic">🔒</span><span id="mLockLabel">앱 잠금 설정</span></div>
     <div class="menu-item" id="mNotify"><span class="ic">🔔</span><span id="mNotifyLabel">알림 켜기</span></div>
     <div class="menu-item" id="mProfile"><span class="ic">✏️</span>이름 변경</div>
+    <div class="menu-item" id="mMembers" style="display:none"><span class="ic">👥</span>회원 관리<span class="adminTag">관리자</span></div>
     <div class="menu-item" id="mLogout"><span class="ic">🚪</span>로그아웃</div>
     <div class="menu-item" id="mFault"><span class="ic">🧪</span><span id="faultLbl">저장 실패 테스트(FAULT): 꺼짐</span></div>
     <div class="menu-item" id="mVer" style="color:var(--muted);font-size:13px;border:none"><span class="ic">ℹ️</span><span id="verLabel"></span></div>
@@ -437,7 +456,7 @@ input,textarea{font-family:inherit;font-size:16px}
 <!-- 공지 작성 시트 -->
 <div class="overlay" id="noticeWriteSheet">
   <div class="sheet">
-    <h3>공지 작성</h3>
+    <h3 id="ntHead">공지 작성</h3>
     <div class="field"><label>제목</label><input id="ntTitle" placeholder="공지 제목"></div>
     <div class="field"><label>내용</label><textarea id="ntBody" rows="6" placeholder="공지 내용을 입력하세요"></textarea></div>
     <label style="display:flex;align-items:center;gap:8px;font-size:14px;margin-bottom:12px"><input type="checkbox" id="ntPin" style="width:auto"> 상단 고정</label>
@@ -451,11 +470,13 @@ input,textarea{font-family:inherit;font-size:16px}
     <h3 id="nvTitle">공지</h3>
     <div id="nvMeta" style="font-size:12px;color:var(--muted);margin-bottom:12px"></div>
     <div id="nvBody" style="white-space:pre-wrap;line-height:1.6"></div>
-    <button class="btn danger" id="nvDelete" style="margin-top:16px;display:none">공지 삭제</button>
+    <p class="ed-only" id="nvAdminHint" style="display:none;margin:14px 0 0">관리자 권한으로 수정·삭제할 수 있어요</p>
+    <button class="btn" id="nvEdit" style="margin-top:16px;display:none">공지 수정</button>
+    <button class="btn danger" id="nvDelete" style="margin-top:8px;display:none">공지 삭제</button>
   </div>
 </div>
 
-<!-- 일정 상세 시트 (전체 내용·특이사항, 작성자만 수정·삭제) -->
+<!-- 일정 상세 시트 (전체 내용·특이사항, 작성자·관리자만 수정·삭제) -->
 <div class="overlay" id="eventDetailSheet">
   <div class="sheet">
     <h3 id="edTitle"></h3>
@@ -468,6 +489,25 @@ input,textarea{font-family:inherit;font-size:16px}
       <button class="btn danger" id="edDelete">삭제</button>
       <button class="btn ghost" id="edClose">닫기</button>
     </div>
+  </div>
+</div>
+
+<!-- 회원 관리 시트 (관리자만, 2026-11-06) -->
+<div class="overlay" id="memberSheet">
+  <div class="sheet">
+    <h3>회원 관리</h3>
+    <p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 4px">내보낸 회원은 대화·공지·일정을 볼 수 없어요. 계정 정보는 남아 있어 다시 들일 수 있어요.</p>
+    <div id="memberList"></div>
+  </div>
+</div>
+
+<!-- 내보내기 확인 시트 (브라우저 confirm 대신 앱 안에서 한 번 더 확인) -->
+<div class="overlay" id="kickSheet" style="z-index:110">
+  <div class="sheet">
+    <h3 id="kickTitle">회원 내보내기</h3>
+    <div class="kickbox" id="kickInfo"></div>
+    <button class="btn danger" id="kickOk">내보내기</button>
+    <button class="btn ghost" id="kickCancel" style="margin-top:8px">취소</button>
   </div>
 </div>
 
@@ -519,7 +559,7 @@ input,textarea{font-family:inherit;font-size:16px}
 /* ============================================================
    팀톡 — 업무용 메신저 (Firebase)
    ============================================================ */
-const APP_VER = "2026.11.05a"; // sw.js의 VER("teamtalk-"+APP_VER)과 반드시 함께 올린다. 2026-11-05 일정 화면 5959식 개편+특이사항(note). 2026-11-01 품질수리 7호(실패패널·FAULT·뒤로가기·따뜻한 바탕). 이전 1.0.1=파일뷰어 CORS 수리
+const APP_VER = "2026.11.06a"; // sw.js의 VER("teamtalk-"+APP_VER)과 반드시 함께 올린다. 2026-11-06 관리자 모드(UID 1개·남의 글 수정삭제·회원 내보내기·초대코드 교체). 2026-11-05 일정 화면 5959식 개편+특이사항(note). 2026-11-01 품질수리 7호(실패패널·FAULT·뒤로가기·따뜻한 바탕). 이전 1.0.1=파일뷰어 CORS 수리
 
 /* ---------- Firebase 설정 (teamtalk-efb25 프로젝트, 2026-06-18 연결) ----------
    웹 설정값은 비밀이 아니라 공개용 — 보안은 firestore.rules/storage.rules로 처리 */
@@ -568,6 +608,15 @@ let rooms = [];           // 내 채팅방
 let curRoom = null;       // 현재 열린 방
 let unsubRooms = null, unsubMsgs = null, unsubUsers = null;
 let pickSel = new Set();  // 새 대화 선택
+let unsubSelf = null;     // 내 users 문서 감시(내보내기 즉시 반영)
+
+/* ---------- 관리자 모드 (2026-11-06) ----------
+   관리자 = 사장님 계정 1개, UID로 판정(별도 로그인 화면 없음). 아래 값은 firestore.rules isAdmin()과 같은 자리표시자 → 실제 UID로 한 번에 치환.
+   화면 판정은 버튼 노출용일 뿐, 실제 권한은 서버 규칙(isAdmin)이 막는다. */
+const ADMIN_UID = "__ADMIN_UID__";
+function isAdmin(){return !!me&&me.uid===ADMIN_UID;}
+function canEditPost(p){return !!me&&!!p&&(p.author===me.uid||isAdmin());} // 일정·공지 수정·삭제 버튼 노출 기준
+function activeUsers(){return allUsers.filter(u=>!u.disabled);}            // 내보낸 회원은 주소록·대화상대에서 제외
 let curMsgs = [];
 
 const $ = id => document.getElementById(id);
@@ -691,6 +740,7 @@ async function onLogin(user){
   const uref=M.doc(fb.db,"users",me.uid);
   let snap=await M.getDoc(uref);
   if(!snap.exists()&&!me.name){ await new Promise(r=>setTimeout(r,900)); snap=await M.getDoc(uref); }
+  if(snap.exists()&&snap.data().disabled){ kickedOut(); return; } // 관리자가 내보낸 계정 → 안내 후 로그아웃
   try{
     if(snap.exists()){ const d=snap.data(); me.name=d.name||me.name||"나"; me.dept=d.dept||""; me.pos=d.position||""; me.phone=d.phone||""; await M.updateDoc(uref,{lastSeen:M.serverTimestamp()}); }
     else { me.name=me.name||"나"; await M.setDoc(uref,{name:me.name,email:me.email,createdAt:M.serverTimestamp(),lastSeen:M.serverTimestamp()}); }
@@ -698,7 +748,9 @@ async function onLogin(user){
   $("authScreen").style.display="none";
   $("app").classList.remove("hidden");
   $("meLabel").textContent="· "+me.name;
+  $("adminTag").hidden=!isAdmin();$("mMembers").style.display=isAdmin()?"":"none";
   if(lockIsOn()) showLock();
+  watchSelf();
   watchUsers();
   watchRooms();
   watchNotices();
@@ -717,7 +769,20 @@ function watchUsers(){
   unsubUsers=M.onSnapshot(M.collection(fb.db,"users"),snap=>{
     allUsers=snap.docs.map(d=>({uid:d.id,...d.data()}));
     renderDir();
-  });
+    if($("memberSheet").classList.contains("on"))renderMembers();
+  },e=>console.warn("users 구독 중단",e&&e.code));
+}
+/* 내 문서 감시: 쓰는 도중 관리자가 내보내면 바로 안내 화면으로 (본인 문서는 내보내진 뒤에도 읽기 허용) */
+function watchSelf(){
+  if(unsubSelf)unsubSelf();
+  unsubSelf=M.onSnapshot(M.doc(fb.db,"users",me.uid),s=>{if(s.exists()&&s.data().disabled)kickedOut();},()=>{});
+}
+let _kicking=false;
+async function kickedOut(){
+  if(_kicking)return;_kicking=true;
+  try{sessionStorage.setItem("tt.kicked","1");}catch(_){}
+  await M.signOut(fb.auth).catch(()=>{});
+  location.reload(); // 구독·화면 상태를 깨끗이 비움. 안내 문구는 boot에서 표시
 }
 function watchRooms(){
   if(unsubRooms)unsubRooms();
@@ -980,7 +1045,7 @@ $("recBtn").onclick=async()=>{
    ============================================================ */
 $("newChatBtn").onclick=()=>{
   pickSel.clear();$("grpName").value="";
-  const others=allUsers.filter(u=>u.uid!==me.uid);
+  const others=activeUsers().filter(u=>u.uid!==me.uid);
   if(!others.length){
     $("userPickList").innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px 2px;line-height:1.6">아직 다른 직원 계정이 없어요.<br>위의 “나와의 채팅”을 쓰거나, 직원이 가입하면 여기서 대화를 시작할 수 있어요.</div>';
   }else{
@@ -1053,7 +1118,7 @@ $("leaveBtn").onclick=async()=>{
 };
 $("addMemberBtn").onclick=async()=>{
   const r=curRoom;
-  const cand=allUsers.filter(u=>!r.members.includes(u.uid));
+  const cand=activeUsers().filter(u=>!r.members.includes(u.uid));
   if(!cand.length){toast("추가할 직원이 없어요");return;}
   const name=prompt("추가할 직원 이름 (정확히):\n"+cand.map(u=>u.name).join(", "));
   if(!name)return;
@@ -1185,11 +1250,25 @@ function markNoticesRead(){
   localStorage.setItem(noticeReadKey(),JSON.stringify([...read]));
   updateNoticeBadge();renderNotices();
 }
-$("newNoticeBtn").onclick=()=>{$("ntTitle").value="";$("ntBody").value="";$("ntPin").checked=false;openOv("noticeWriteSheet");};
+let _editNotice=null; // 수정 중인 공지(없으면 새 공지). 2026-11-06 작성자·관리자 수정 추가
+function openNoticeWrite(n){
+  _editNotice=n||null;
+  $("ntTitle").value=n?n.title||"":"";$("ntBody").value=n?n.body||"":"";$("ntPin").checked=!!(n&&n.pinned);
+  $("ntHead").textContent=n?"공지 수정":"공지 작성";$("ntSave").textContent=n?"수정하기":"공지 올리기";
+  openOv("noticeWriteSheet");
+}
+$("newNoticeBtn").onclick=()=>openNoticeWrite(null);
 $("ntSave").onclick=async()=>{
   const title=$("ntTitle").value.trim(),body=$("ntBody").value.trim();
   if(!title){toast("제목을 입력하세요");return;}
-  const pinned=$("ntPin").checked;
+  const pinned=$("ntPin").checked,en=_editNotice;
+  if(en){ // 수정: 내용 필드만 바꾼다(작성자 필드는 그대로 — 규칙도 관리자 수정 시 작성자 변경을 막음)
+    await guardWrite("공지를 수정하지 못했어요",async()=>{
+      await M.updateDoc(M.doc(fb.db,"notices",en.id),{title,body,pinned});
+      _editNotice=null;closeOv("noticeWriteSheet");toast("공지를 수정했어요");
+    },"수정되지 않았어요. 고친 내용은 그대로 남아 있어요.");
+    return;
+  }
   await guardWrite("공지를 올리지 못했어요",async()=>{
     await M.addDoc(M.collection(fb.db,"notices"),{title,body,pinned,author:me.uid,authorName:me.name,createdAt:M.serverTimestamp()});
     closeOv("noticeWriteSheet");toast("공지를 올렸어요");
@@ -1201,14 +1280,67 @@ function openNotice(id){
   $("nvTitle").textContent=(n.pinned?"📌 ":"")+n.title;
   $("nvMeta").textContent=`${n.authorName||""} · ${fmtDay(n.createdAt)} ${fmtTime(n.createdAt)}`;
   $("nvBody").textContent=n.body||"";
-  $("nvDelete").style.display=n.author===me.uid?"block":"none";
+  const can=canEditPost(n);
+  $("nvEdit").style.display=can?"block":"none";$("nvDelete").style.display=can?"block":"none";
+  $("nvAdminHint").style.display=can&&n.author!==me.uid?"":"none";
   openOv("noticeViewSheet");
 }
+$("nvEdit").onclick=()=>{const n=curNotice;if(!n)return;closeOv("noticeViewSheet");openNoticeWrite(n);};
 $("nvDelete").onclick=async()=>{
   if(!curNotice||!confirm("이 공지를 삭제할까요?"))return;
   const nid=curNotice.id;
   await guardWrite("공지를 삭제하지 못했어요",async()=>{await M.deleteDoc(M.doc(fb.db,"notices",nid));closeOv("noticeViewSheet");toast("삭제했어요");});
 };
+
+/* ============================================================
+   회원 관리 (관리자만, 2026-11-06) — users 문서는 지우지 않고 disabled=true 표시
+   내보내기 전 앱 안 확인 시트 필수. 관리자 자신은 버튼 자체가 없음(규칙도 차단).
+   ============================================================ */
+function renderMembers(){
+  const el=$("memberList");if(!el)return;
+  const byName=(a,b)=>(a.name||"").localeCompare(b.name||"","ko");
+  const on=activeUsers().sort(byName),off=allUsers.filter(u=>u.disabled).sort(byName);
+  const row=u=>{
+    const sub=[u.dept,u.position,u.email].filter(Boolean).join(" · ");
+    const act=u.uid===me.uid?'<span class="mself">관리자(나)</span>'
+      :u.disabled?`<button type="button" class="mact back" data-back="${esc(u.uid)}">다시 들이기</button>`
+      :`<button type="button" class="mact" data-kick="${esc(u.uid)}">내보내기</button>`;
+    return `<div class="mbrow${u.disabled?" off":""}"><div class="avatar">${esc(initials(u.name))}</div>
+      <div class="mi"><div class="mn">${esc(u.name||"(이름 없음)")}</div>${sub?`<div class="ms">${esc(sub)}</div>`:""}</div>${act}</div>`;
+  };
+  el.innerHTML=`<div class="mbhead">팀원 ${on.length}명</div>`+on.map(row).join("")+
+    (off.length?`<div class="mbhead">내보낸 회원 ${off.length}명</div>`+off.map(row).join(""):"");
+  el.querySelectorAll("[data-kick]").forEach(b=>b.onclick=()=>askKick(b.dataset.kick));
+  el.querySelectorAll("[data-back]").forEach(b=>b.onclick=()=>readmit(b.dataset.back));
+}
+$("mMembers").onclick=()=>{if(!isAdmin())return;closeOv("menuSheet");renderMembers();openOv("memberSheet");};
+let _kickUid=null;
+function askKick(uid){
+  const u=allUsers.find(x=>x.uid===uid);if(!u||uid===me.uid)return;
+  _kickUid=uid;
+  $("kickTitle").textContent=(u.name||"이 회원")+"님을 내보낼까요?";
+  $("kickInfo").innerHTML=`<b>${esc(u.name||"(이름 없음)")}</b>${u.email?" · "+esc(u.email):""}<br>`+
+    "내보내면 이 계정으로는 대화·공지·일정을 더 볼 수 없어요.<br>계정과 지난 대화는 지워지지 않고, '내보낸 회원'에서 다시 들일 수 있어요.";
+  openOv("kickSheet");
+}
+$("kickCancel").onclick=()=>{_kickUid=null;closeOv("kickSheet");};
+$("kickOk").onclick=async()=>{
+  const uid=_kickUid;if(!uid||uid===me.uid||!isAdmin())return;
+  const u=allUsers.find(x=>x.uid===uid),nm=(u&&u.name)||"회원";
+  $("kickOk").disabled=true;
+  await guardWrite(nm+"님을 내보내지 못했어요",async()=>{
+    await M.updateDoc(M.doc(fb.db,"users",uid),{disabled:true,disabledAt:M.serverTimestamp(),disabledBy:me.uid});
+    _kickUid=null;closeOv("kickSheet");toast(nm+"님을 내보냈어요");
+  },"내보내지 않았어요. 다시 시도하거나 닫으세요.");
+  $("kickOk").disabled=false;
+};
+async function readmit(uid){
+  const u=allUsers.find(x=>x.uid===uid),nm=(u&&u.name)||"회원";
+  await guardWrite(nm+"님을 다시 들이지 못했어요",async()=>{
+    await M.updateDoc(M.doc(fb.db,"users",uid),{disabled:false,disabledAt:M.deleteField(),disabledBy:M.deleteField()});
+    toast(nm+"님을 다시 들였어요");
+  });
+}
 
 /* ============================================================
    조직도 / 직원 주소록
@@ -1218,7 +1350,7 @@ function renderDir(){
   if(!allUsers.length){el.innerHTML='<div class="empty">직원 정보를 불러오는 중…</div>';return;}
   // 부서별 그룹
   const groups={};
-  allUsers.forEach(u=>{const d=(u.dept||"").trim()||"부서 미지정";(groups[d]=groups[d]||[]).push(u);});
+  activeUsers().forEach(u=>{const d=(u.dept||"").trim()||"부서 미지정";(groups[d]=groups[d]||[]).push(u);});
   const order=Object.keys(groups).sort((a,b)=>a==="부서 미지정"?1:b==="부서 미지정"?-1:a.localeCompare(b,"ko"));
   el.innerHTML=order.map(dep=>{
     const us=groups[dep].sort((a,b)=>(a.name||"").localeCompare(b.name||"","ko"));
@@ -1337,7 +1469,7 @@ function renderCalendar(){
 }
 /* 목록 카드: 긴 제목·내용·특이사항은 줄임, 탭하면 상세에서 전체 표시. mode: up(D-n)/day(시간)/past(날짜) */
 function evtCard(e,mode){
-  const mine=me&&e.author===me.uid,past=String(e.date||"")<todayStr();
+  const mine=canEditPost(e),past=String(e.date||"")<todayStr(); // 작성자 또는 관리자
   const badge=mode==="day"?(e.time?esc(e.time):"종일"):mode==="past"?fmtMD(e.date):ddLabel(e.date);
   const sub=(mode==="day"?[e.authorName]:[fmtDateK(e.date),e.time,e.authorName]).filter(Boolean).join(" · ");
   const desc=(e.desc||"").trim(),note=(e.note||"").trim();
@@ -1415,8 +1547,10 @@ function fillDetail(ev){
   const desc=(ev.desc||"").trim(),note=(ev.note||"").trim();
   $("edDesc").textContent=desc;$("edDescWrap").style.display=desc?"":"none";
   $("edNote").textContent=note;$("edNoteWrap").style.display=note?"":"none";
-  const mine=me&&ev.author===me.uid;
-  $("edEdit").style.display=mine?"":"none";$("edDelete").style.display=mine?"":"none";$("edOnly").style.display=mine?"none":"";
+  const can=canEditPost(ev),mine=me&&ev.author===me.uid;
+  $("edEdit").style.display=can?"":"none";$("edDelete").style.display=can?"":"none";
+  /* 남의 글: 일반 회원=작성자만 안내, 관리자=관리자 권한 안내 */
+  $("edOnly").textContent=can?"관리자 권한으로 수정·삭제할 수 있어요":"작성자만 수정·삭제할 수 있어요";$("edOnly").style.display=mine?"none":"";
 }
 function openDetail(id){
   const ev=evById(id);if(!ev)return;
@@ -1451,7 +1585,7 @@ function showForm(ev){
   }
   $("evtFormTitle").textContent=ev?"일정 수정":"일정 추가";
   $("evSave").textContent=ev?"수정하기":"일정 저장";
-  $("evDelete").style.display=ev&&ev.author===me.uid?"block":"none";
+  $("evDelete").style.display=ev&&canEditPost(ev)?"block":"none";
   $("evtForm").hidden=false;$("tabCal").classList.add("picking");
   renderDateSum();renderEventsMonth();
   $("calScroll").scrollTop=0;
@@ -1632,6 +1766,9 @@ async function boot(){
     if(user) onLogin(user);
     else { $("app").classList.add("hidden");$("authScreen").style.display="flex";$("authBtn").disabled=false; }
   });
+  /* 관리자가 내보낸 계정으로 로그인했던 경우: 로그아웃 후 안내 (kickedOut → reload) */
+  let kicked=false;try{kicked=sessionStorage.getItem("tt.kicked")==="1";sessionStorage.removeItem("tt.kicked");}catch(_){}
+  if(kicked){$("authMsg").style.color="var(--danger)";$("authMsg").textContent="관리자가 팀에서 내보낸 계정이에요. 다시 쓰려면 관리자에게 문의하세요.";}
 }
 
 /* 뒤로가기: 실패 패널 → 열린 시트 → 대화방 → 이전 탭 순으로 닫힘 (2026-11-01 7호) */

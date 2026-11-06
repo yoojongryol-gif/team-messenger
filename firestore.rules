@@ -3,24 +3,36 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // 로그인 + 정식 가입(users 문서 존재)한 사람만 데이터 접근 = 초대 코드로 가입한 팀원만
+    // 관리자가 내보낸 회원(users/{uid}.disabled == true)은 팀원에서 제외 — 문서는 지우지 않고 표시만 (2026-11-06 관리자 모드)
     function signedIn() { return request.auth != null; }
     function member() {
       return request.auth != null
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('disabled', false) != true;
     }
-    // 초대 코드 해시 (원문 코드는 여기에도, 앱에도 없음 — 해시만 존재)
-    // 현재 코드: jongsangsa2026  (바꾸려면: printf '%s' 'teamtalk-invite|새코드(소문자)' | openssl dgst -sha256)
+    // 관리자 = 사장님 계정 1개 (UID 기준). 자리표시자는 index.html의 ADMIN_UID와 같은 값으로 한 번에 치환한다.
+    function isAdmin() { return request.auth != null && request.auth.uid == '__ADMIN_UID__'; }
+    // 초대 코드 해시 (원문 코드는 여기에도, 앱에도, 저장소에도 없음 — 해시만 존재. 원문은 저장소 밖 보관)
+    // 바꾸려면: printf '%s' 'teamtalk-invite|새코드(소문자)' | openssl dgst -sha256  → 아래 값 교체 후 콘솔 게시
+    // 바꿔도 기존 회원은 영향 없음(가입 때만 검사, 이후 update는 '기존 해시 그대로'만 확인)
     function inviteOK() {
       return request.resource.data.inviteHash ==
-        '482cf92a74cca9becd4071a8e706c3bf2b6f934cc2fdfa92426566159929c8a1';
+        '77b8ed40bb56e9e6229bf780aeb0fc59478e51bebe4b0f3b4aa2f9bb8870b642';
     }
 
     // 사용자: 팀원만 목록 조회. 가입(문서 생성)은 초대 코드가 맞아야만 허용.
+    // 본인 문서는 내보내진 뒤에도 읽기 허용 → 앱이 '내보내진 계정' 안내를 띄울 수 있게
     match /users/{uid} {
-      allow read: if member();
-      allow create: if request.auth.uid == uid && inviteOK();
-      allow update: if request.auth.uid == uid
-        && request.resource.data.inviteHash == resource.data.inviteHash; // 코드 위변조 차단
+      allow read: if member() || (signedIn() && request.auth.uid == uid);
+      allow create: if request.auth.uid == uid && inviteOK()
+        && !('disabled' in request.resource.data);
+      // 본인 수정: 코드 위변조 차단 + disabled 스스로 해제 불가
+      // 관리자 수정: 남의 문서의 내보내기 표시 필드만 (관리자 자신은 위 '본인' 경로라 내보내기 불가)
+      allow update: if (request.auth.uid == uid && member()
+          && request.resource.data.inviteHash == resource.data.inviteHash
+          && request.resource.data.get('disabled', false) == resource.data.get('disabled', false))
+        || (isAdmin() && member() && request.auth.uid != uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['disabled', 'disabledAt', 'disabledBy']));
       allow delete: if false;
     }
 
@@ -44,18 +56,22 @@ service cloud.firestore {
       }
     }
 
-    // 공지사항: 팀원만 읽기/작성, 작성자만 수정·삭제
+    // 공지사항: 팀원만 읽기/작성, 작성자 또는 관리자만 수정·삭제 (관리자 수정 시 작성자 필드는 그대로)
     match /notices/{noticeId} {
       allow read: if member();
       allow create: if member() && request.resource.data.author == request.auth.uid;
-      allow update, delete: if member() && resource.data.author == request.auth.uid;
+      allow update: if member() && (resource.data.author == request.auth.uid
+        || (isAdmin() && request.resource.data.author == resource.data.author));
+      allow delete: if member() && (resource.data.author == request.auth.uid || isAdmin());
     }
 
-    // 팀 일정: 팀원만 읽기/작성, 작성자만 수정·삭제
+    // 팀 일정: 팀원만 읽기/작성, 작성자 또는 관리자만 수정·삭제 (관리자 수정 시 작성자 필드는 그대로)
     match /events/{eventId} {
       allow read: if member();
       allow create: if member() && request.resource.data.author == request.auth.uid;
-      allow update, delete: if member() && resource.data.author == request.auth.uid;
+      allow update: if member() && (resource.data.author == request.auth.uid
+        || (isAdmin() && request.resource.data.author == resource.data.author));
+      allow delete: if member() && (resource.data.author == request.auth.uid || isAdmin());
     }
   }
 }
