@@ -18,6 +18,7 @@
   --bg:#15120f; --panel:#1e1a16; --panel2:#29231d; --line:#3a3129;
   --text:#f2ede6; --muted:#a99d8e; --accent:#3b82f6; --accent2:#2563eb;
   --accent-soft:rgba(59,130,246,.2); --mine:#2563eb; --theirs:#2c251f; --ok:#22c55e; --danger:#ef4444;
+  --st-planned:#9a8f80; --st-doing:#3b82f6; --st-done:#22c55e; --st-cancel:#7a6f62; --st-warn:#f59e0b; --warn-soft:rgba(245,158,11,.14);
   --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -275,7 +276,61 @@ input,textarea{font-family:inherit;font-size:16px}
 .ed-note{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:10px;padding:10px 12px;margin-bottom:14px}
 .ed-note .ed-text{font-weight:600}
 .ed-only{font-size:12px;color:var(--muted);text-align:center;margin:0 0 10px}
-.ed-btns .btn{margin-top:8px}
+.ed-btns{display:flex;flex-wrap:wrap;gap:8px}
+.ed-btns .btn{margin-top:0;padding-left:4px;padding-right:4px;flex:1 1 28%;width:auto}
+.ed-btns #edRecord{flex-basis:100%}
+
+/* ---- 일정 상태·결과 기록 (2026-11-10) : 예정 회색·진행중 파랑·완료 초록·취소 흐림·결과 미기록 주황 ---- */
+.sd{display:inline-block;flex:none;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px;background:var(--st-planned)}
+.sd.s-doing{background:var(--st-doing)}.sd.s-done{background:var(--st-done)}.sd.s-canceled{background:var(--st-cancel)}.sd.s-nores{background:var(--st-warn)}
+.cd-ev .sd{width:5px;height:5px;margin-right:2px;vertical-align:1px}
+.cd-ev.s-canceled,.evt.s-canceled .t{text-decoration:line-through;opacity:.55}
+.evt.s-canceled{opacity:.7}
+.st-tag{display:inline-block;margin-top:4px;font-size:11px;font-weight:700;line-height:1.5;padding:0 7px;border-radius:999px;background:var(--panel2);color:var(--muted)}
+.st-tag.s-doing{color:var(--st-doing);background:var(--accent-soft)}.st-tag.s-done{color:var(--st-done);background:rgba(34,197,94,.14)}
+.st-tag.s-nores{color:var(--st-warn);background:var(--warn-soft)}
+.evt .ln.rs{color:var(--text)}.evt .ln.rs .lb{background:rgba(34,197,94,.2);color:var(--st-done)}
+.cal-alert{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;margin:0 0 10px;padding:8px 12px;text-align:left;border-radius:13px;border:1px solid rgba(245,158,11,.45);background:var(--warn-soft);color:var(--text);font-size:14px;font-weight:600}
+.cal-alert[hidden],#tabCal.picking .cal-alert{display:none}
+.cal-alert .ca-n{flex:none;min-width:26px;height:26px;border-radius:13px;background:var(--st-warn);color:#1a1206;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0 7px}
+.cal-alert .ca-t{flex:1;min-width:0}.cal-alert .ca-go{flex:none;color:var(--st-warn);font-size:18px}
+.cal-tools{display:flex;gap:8px;margin:0 0 8px}
+.cal-tools .add-btn{margin:0;flex:1}
+.cal-tools .tool-btn{flex:none;min-height:48px;padding:0 16px;border-radius:13px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-weight:700;font-size:14px}
+#tabCal.picking .cal-tools{display:none}
+.flow{list-style:none;margin:0 0 12px;padding:0;position:relative}
+.fl{display:flex;gap:11px;position:relative;padding-bottom:14px}
+.fl:last-child{padding-bottom:0}
+.fl::before{content:"";position:absolute;left:15px;top:32px;bottom:2px;width:2px;background:var(--line)}
+.fl:last-child::before{display:none}
+.fl-ic{flex:none;width:32px;height:32px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;z-index:1}
+.fl-body{flex:1;min-width:0;padding-top:3px}
+.fl-h{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:4px;letter-spacing:.01em}
+.fl-b{white-space:pre-wrap;word-break:break-word;line-height:1.6;font-size:14.5px}
+.fl.blank .fl-b{color:var(--muted);opacity:.65;font-size:13px}.fl.blank .fl-ic{opacity:.5}
+.fl.done .fl-ic{background:rgba(34,197,94,.18);border-color:var(--st-done)}
+.fl-note{margin-top:8px;background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:10px;padding:8px 11px;font-weight:600;white-space:pre-wrap;word-break:break-word;line-height:1.55}
+.fl-note .ed-label{display:inline-block;margin:0 6px 0 0;background:var(--accent2);color:#fff}
+.fl-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.st-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.st-chip{min-height:40px;padding:0 13px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);font-size:13px;font-weight:700;display:inline-flex;align-items:center}
+.st-chip.on{color:var(--text);border-color:var(--accent);background:var(--accent-soft)}
+.st-chip.on.s-done{border-color:var(--st-done);background:rgba(34,197,94,.16)}
+.st-chip.on.s-canceled{border-color:var(--st-cancel);background:var(--panel)}
+.rec-form{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+.rec-form .field{margin-bottom:10px}.rec-form .field label{font-weight:700}
+.rec-form .field textarea{background:var(--panel);resize:vertical}
+.rec-form .rf-btns{display:flex;gap:8px}.rec-form .rf-btns .btn{margin:0}
+.rec-form .rf-btns .btn.ghost{flex:0 0 36%}
+.sum-hint{font-size:12px;color:var(--muted);margin:-6px 0 10px;line-height:1.5}
+.sum-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
+.sum-table th{font-size:11px;color:var(--muted);text-align:left;font-weight:700;padding:0 6px 6px}
+.sum-table td{vertical-align:top;padding:8px 6px;border-top:1px solid var(--line);line-height:1.45;word-break:break-word}
+.sum-table td.d{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}
+.sum-table td.s{white-space:nowrap}
+.sum-table td .r{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.sum-table tr.s-canceled td.t{text-decoration:line-through;opacity:.6}
+.copy-row{display:flex;gap:8px}.copy-row .btn{margin:0}.copy-row .btn.ghost{flex:0 0 32%}
 /* 문서 뷰어 */
 #docViewer{position:fixed;inset:0;background:var(--bg);z-index:360;display:none;flex-direction:column}
 .doc-top{display:flex;align-items:center;gap:8px;padding:calc(8px + var(--safe-t)) 8px 8px;background:#000;border-bottom:1px solid var(--line)}
@@ -352,10 +407,11 @@ input,textarea{font-family:inherit;font-size:16px}
         <button class="iconbtn" id="calRefresh" aria-label="새로고침" title="새로고침">🔄</button>
       </div>
       <div class="scroll cal-scroll" id="calScroll"><div class="cal-wrap">
+        <button type="button" class="cal-alert" id="calAlert" hidden><span class="ca-n" id="calAlertN">0</span><span class="ca-t">결과 안 적은 지난 일정</span><span class="ca-go" aria-hidden="true">›</span></button>
         <div class="cal-err" id="calErr" role="alert" hidden></div>
         <div class="cal" id="calBox"></div>
         <div id="dayEventList"></div>
-        <button class="add-btn" id="btnToggleEvtForm">＋ 일정 추가</button>
+        <div class="cal-tools"><button class="add-btn" id="btnToggleEvtForm">＋ 일정 추가</button><button type="button" class="tool-btn" id="btnMonthSum">📋 이 달 정리</button></div>
         <div class="form-card" id="evtForm" hidden>
           <div class="form-head"><button type="button" class="form-back" id="evtFormBack">← 닫기</button><b id="evtFormTitle">일정 추가</b></div>
           <div class="field"><label for="evTitle">제목</label><input id="evTitle" maxlength="40" autocomplete="off" placeholder="예: 거래처 미팅"></div>
@@ -481,14 +537,42 @@ input,textarea{font-family:inherit;font-size:16px}
   <div class="sheet">
     <h3 id="edTitle"></h3>
     <div class="ed-meta" id="edMeta"></div>
-    <div class="ed-block" id="edDescWrap"><span class="ed-label">내용</span><div class="ed-text" id="edDesc"></div></div>
-    <div class="ed-note" id="edNoteWrap"><span class="ed-label">특이사항</span><div class="ed-text" id="edNote"></div></div>
+    <ol class="flow" id="edFlow">
+      <li class="fl" id="flPlan"><span class="fl-ic">📝</span><div class="fl-body"><div class="fl-h">계획</div><div class="fl-b" id="flPlanB"></div><div class="fl-note" id="flPlanNote" style="display:none"><span class="ed-label">특이사항</span><span id="flPlanNoteT"></span></div></div></li>
+      <li class="fl" id="flRun"><span class="fl-ic">▶</span><div class="fl-body"><div class="fl-h">실행</div><div class="fl-b" id="flRunB"></div><div class="fl-sub" id="flRunSub"></div><div class="st-row" id="edQuick" style="display:none"></div></div></li>
+      <li class="fl" id="flExec"><span class="fl-ic">📋</span><div class="fl-body"><div class="fl-h">실행 내용</div><div class="fl-b" id="flExecB"></div></div></li>
+      <li class="fl" id="flRes"><span class="fl-ic">✅</span><div class="fl-body"><div class="fl-h">결과</div><div class="fl-b" id="flResB"></div></div></li>
+    </ol>
+    <div class="rec-form" id="recForm" style="display:none">
+      <div class="field"><label>상태</label><div class="st-row" id="rfStatus" style="margin-top:0"></div></div>
+      <div class="field"><label for="rfExec">📋 실행 내용 (실제로 한 일)</label><textarea id="rfExec" rows="3" maxlength="1000" placeholder="누구와 무엇을 했는지"></textarea></div>
+      <div class="field"><label for="rfRes">✅ 결과 (성과·다음 할 일)</label><textarea id="rfRes" rows="3" maxlength="1000" placeholder="어떻게 됐는지, 다음에 할 일"></textarea></div>
+      <div class="rf-btns"><button class="btn ghost" id="rfCancel" type="button">취소</button><button class="btn" id="rfSave" type="button">저장</button></div>
+    </div>
     <p class="ed-only" id="edOnly" style="display:none">작성자만 수정·삭제할 수 있어요</p>
     <div class="ed-btns">
-      <button class="btn" id="edEdit">수정</button>
+      <button class="btn" id="edRecord">결과 기록</button>
+      <button class="btn ghost" id="edEdit">수정</button>
       <button class="btn danger" id="edDelete">삭제</button>
       <button class="btn ghost" id="edClose">닫기</button>
     </div>
+  </div>
+</div>
+
+<!-- 결과 미기록 목록 / 월간 정리 시트 (2026-11-10) -->
+<div class="overlay" id="evListSheet">
+  <div class="sheet">
+    <h3>결과 안 적은 지난 일정</h3>
+    <p class="sum-hint">최근 60일, 내가 기록할 수 있는 일정만 보여요. 눌러서 결과를 적어 주세요.</p>
+    <div id="evListBody"></div>
+    <button class="btn ghost" id="evListClose" type="button">닫기</button>
+  </div>
+</div>
+<div class="overlay" id="evMonthSheet">
+  <div class="sheet">
+    <h3 id="evMonthTitle">이 달 정리</h3>
+    <div id="evMonthBody"></div>
+    <div class="copy-row"><button class="btn ghost" id="evMonthClose" type="button">닫기</button><button class="btn" id="evMonthCopy" type="button">복사</button></div>
   </div>
 </div>
 
@@ -559,7 +643,7 @@ input,textarea{font-family:inherit;font-size:16px}
 /* ============================================================
    팀톡 — 업무용 메신저 (Firebase)
    ============================================================ */
-const APP_VER = "2026.11.06a"; // sw.js의 VER("teamtalk-"+APP_VER)과 반드시 함께 올린다. 2026-11-06 관리자 모드(UID 1개·남의 글 수정삭제·회원 내보내기·초대코드 교체). 2026-11-05 일정 화면 5959식 개편+특이사항(note). 2026-11-01 품질수리 7호(실패패널·FAULT·뒤로가기·따뜻한 바탕). 이전 1.0.1=파일뷰어 CORS 수리
+const APP_VER = "2026.11.10a"; // sw.js의 VER("teamtalk-"+APP_VER)과 반드시 함께 올린다. 2026-11-10 일정 상태(예정·진행중·완료·취소)+실행 내용·결과 기록+결과 미기록 알림+이 달 정리. 2026-11-06 관리자 모드(UID 1개·남의 글 수정삭제·회원 내보내기·초대코드 교체). 2026-11-05 일정 화면 5959식 개편+특이사항(note). 2026-11-01 품질수리 7호(실패패널·FAULT·뒤로가기·따뜻한 바탕). 이전 1.0.1=파일뷰어 CORS 수리
 
 /* ---------- Firebase 설정 (teamtalk-efb25 프로젝트, 2026-06-18 연결) ----------
    웹 설정값은 비밀이 아니라 공개용 — 보안은 firestore.rules/storage.rules로 처리 */
@@ -1205,7 +1289,7 @@ function switchTab(id,fromPop){
   document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("on",b.dataset.tab===id));
   if(id==="tabNotice")markNoticesRead();
   if(id==="tabDir")renderDir();
-  if(id==="tabCal")renderEventsMonth();
+  if(id==="tabCal"){renderEventsMonth();loadPastRange();}
 }
 document.querySelectorAll(".navbtn").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 
@@ -1383,6 +1467,7 @@ async function dmWith(uid){
    일정 공유 (팀 캘린더) — 2026-11-05 5959 일정 화면 방식으로 개편
    달력 칸에 제목 칩 / 날짜 탭=그 날 목록 / 폼이 열린 동안 달력=날짜 선택기 / 다가오는 일정 접기
    저장 필드: title·date·time·desc(내용)·note(특이사항, 선택)·author·authorName·createdAt
+   + 2026-11-10: status(planned|doing|done|canceled)·execNote·result·doneAt·doneBy (작성자·관리자만 기록, rules 무변경)
    ============================================================ */
 const CAL_TITLE_MAX=3, DAY_MAX=4, UP_PAGE=12, UP_LIMIT_STEP=100;
 const UP_OPEN_KEY="tt.pref.upcomingOpen";
@@ -1399,7 +1484,44 @@ function fmtDateK(ds){const d=ymdParts(ds);return d?`${d.getFullYear()}년 ${d.g
 function fmtMD(ds){const d=ymdParts(ds);return d?`${d.getMonth()+1}/${d.getDate()}`:"";}
 function ddLabel(ds){const d=ymdParts(ds),t=ymdParts(todayStr());if(!d)return "";const n=Math.round((d-t)/86400000);return n===0?"오늘":n>0?"D-"+n:"D+"+(-n);}
 function evSort(a,b){return String(a.date||"").localeCompare(String(b.date||""))||String(a.time||"").localeCompare(String(b.time||""))||String(a.id).localeCompare(String(b.id));}
-function evById(id){return events.find(e=>e.id===id)||upEvents.find(e=>e.id===id)||null;}
+function evById(id){return events.find(e=>e.id===id)||upEvents.find(e=>e.id===id)||_pastRange.find(e=>e.id===id)||null;}
+
+/* ---- 상태·결과 기록 (2026-11-10) ---- */
+const ST_LABEL={planned:"예정",doing:"진행중",done:"완료",canceled:"취소",nores:"결과 미기록"};
+const ST_ORDER=["planned","doing","done","canceled"];
+const PAST_DAYS=60;
+let _pastRange=[], _pastAt=0, _recOpen=false, _rfStatus="done", _sheet2=null;
+function isPastEv(e){return String(e.date||"")<todayStr();}
+/* 표시용 상태 키: 상태 칸이 없거나 '예정'인데 날짜가 지났으면 nores(결과 미기록) */
+function evStKey(e){const st=e.status;if(st==="done"||st==="canceled"||st==="doing")return st;return isPastEv(e)?"nores":"planned";}
+function needsResult(e){return isPastEv(e)&&e.status!=="done"&&e.status!=="canceled";}
+function stDot(k){return `<i class="sd s-${k}"></i>`;}
+function dateAdd(days){const d=new Date();d.setDate(d.getDate()+days);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
+function userName(uid){const u=allUsers.find(x=>x.uid===uid);return u?u.name:"";}
+function fmtTs(ts){try{if(!ts)return "";const d=ts.toDate?ts.toDate():new Date(ts);return `${d.getMonth()+1}/${d.getDate()} ${fmtTime(d)}`;}catch(e){return "";}}
+/* 최근 60일 지난 일정: 날짜 범위 1회 질의(5분 캐시). 이번 달 구독 데이터가 있으면 그쪽이 우선 */
+async function loadPastRange(force){
+  if(!me||!fb||!M.getDocs)return;
+  if(!force&&Date.now()-_pastAt<300000)return;
+  _pastAt=Date.now();
+  try{
+    const q=M.query(M.collection(fb.db,"events"),M.where("date",">=",dateAdd(-PAST_DAYS)),M.where("date","<",todayStr()));
+    const snap=await M.getDocs(q);
+    _pastRange=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderAlert();
+  }catch(e){_pastAt=0;console.warn("지난 일정 조회 실패",e);}
+}
+function missingList(){
+  const t=todayStr(),lo=dateAdd(-PAST_DAYS),m=new Map();
+  _pastRange.forEach(e=>m.set(e.id,e));
+  events.forEach(e=>{if(String(e.date||"")<t&&String(e.date||"")>=lo)m.set(e.id,e);});
+  return [...m.values()].filter(e=>needsResult(e)&&canEditPost(e)).sort((a,b)=>evSort(b,a));
+}
+function renderAlert(){
+  const n=me?missingList().length:0;
+  $("calAlert").hidden=!n;$("calAlertN").textContent=n;
+  $("calAlert").setAttribute("aria-label","결과 안 적은 지난 일정 "+n+"건");
+}
 
 /* ---- 구독: 달력=보고 있는 달, 다가오는 일정=오늘 이후(읽기 전용 질의 추가, 저장 구조 무관) ---- */
 function calErr(e){
@@ -1433,7 +1555,7 @@ function renderEventsMonth(){
   if(_selDate===null&&!_picking&&ymKey(calYM)===todayStr().slice(0,7))_selDate=todayStr();
   watchEventsMonth();watchUpcoming();drawCal();
 }
-function refreshCal(){_refreshing=true;calErr(null);watchEventsMonth(true);watchUpcoming(true);}
+function refreshCal(){_refreshing=true;calErr(null);watchEventsMonth(true);watchUpcoming(true);loadPastRange(true);}
 $("calRefresh").onclick=refreshCal;
 function moveMonth(delta){
   calYM=new Date(calYM.getFullYear(),calYM.getMonth()+delta,1);
@@ -1444,7 +1566,7 @@ function moveMonth(delta){
 /* ---- 화면 ---- */
 function drawCal(){
   if(!calYM)return;
-  renderCalendar();renderDayList();renderUpcoming();renderPast();
+  renderCalendar();renderDayList();renderUpcoming();renderPast();renderAlert();
   if(_detailId){const ev=evById(_detailId);if(ev)fillDetail(ev);else if(_monthLoaded&&_upLoaded)closeDetail();}
 }
 function renderCalendar(){
@@ -1460,7 +1582,7 @@ function renderCalendar(){
     let inner="";
     if(_picking){if(list.length)inner='<span class="dot"></span>';}
     else if(list.length){
-      inner='<span class="cd-evts">'+list.slice(0,CAL_TITLE_MAX).map(e=>`<span class="cd-ev${past?" past":""}">${esc(e.title)}</span>`).join("")
+      inner='<span class="cd-evts">'+list.slice(0,CAL_TITLE_MAX).map(e=>{const k=evStKey(e);return `<span class="cd-ev${past?" past":""} s-${k}">${stDot(k)}${esc(e.title)}</span>`;}).join("")
         +(list.length>CAL_TITLE_MAX?`<span class="cd-more">+${list.length-CAL_TITLE_MAX}</span>`:"")+"</span>";
     }
     h+=`<button type="button" class="cal-d${ds===tStr?" today":""}${past?" past-d":""}${isSel?" sel":""}" data-day="${ds}" aria-label="${m+1}월 ${d}일${list.length?`, 일정 ${list.length}건`:""}"><span class="cd-n ${dow===0?"cal-sun":dow===6?"cal-sat":""}">${d}</span>${inner}</button>`;
@@ -1468,14 +1590,16 @@ function renderCalendar(){
   $("calBox").innerHTML=h+"</div>";
 }
 /* 목록 카드: 긴 제목·내용·특이사항은 줄임, 탭하면 상세에서 전체 표시. mode: up(D-n)/day(시간)/past(날짜) */
-function evtCard(e,mode){
-  const mine=canEditPost(e),past=String(e.date||"")<todayStr(); // 작성자 또는 관리자
+function evtCard(e,mode,noDel){
+  const mine=!noDel&&canEditPost(e),past=String(e.date||"")<todayStr(),k=evStKey(e); // 작성자 또는 관리자
   const badge=mode==="day"?(e.time?esc(e.time):"종일"):mode==="past"?fmtMD(e.date):ddLabel(e.date);
   const sub=(mode==="day"?[e.authorName]:[fmtDateK(e.date),e.time,e.authorName]).filter(Boolean).join(" · ");
-  const desc=(e.desc||"").trim(),note=(e.note||"").trim();
-  return `<div class="evt${past?" past":""}" data-ev="${esc(e.id)}" role="button" tabindex="0">
+  const desc=(e.desc||"").trim(),note=(e.note||"").trim(),res=(e.result||"").trim();
+  return `<div class="evt${past?" past":""} s-${k}" data-ev="${esc(e.id)}" role="button" tabindex="0">
     <div class="dd">${badge}</div>
-    <div class="info"><div class="t">${esc(e.title)}</div>${sub?`<div class="sub">${esc(sub)}</div>`:""}
+    <div class="info"><div class="t">${stDot(k)}${esc(e.title)}</div>${sub?`<div class="sub">${esc(sub)}</div>`:""}
+      ${k!=="planned"?`<span class="st-tag s-${k}">${ST_LABEL[k]}</span>`:""}
+      ${res?`<div class="ln rs"><span class="lb">결과</span><span class="tx">${esc(res)}</span></div>`:""}
       ${desc?`<div class="ln"><span class="lb">내용</span><span class="tx">${esc(desc)}</span></div>`:""}
       ${note?`<div class="ln nt"><span class="lb">특이사항</span><span class="tx">${esc(note)}</span></div>`:""}
     </div>
@@ -1541,23 +1665,90 @@ function tapDay(ds){
 }
 
 /* ---- 상세 시트: 긴 글 전체, 내용·특이사항 라벨 구분 ---- */
+function setFlow(id,text,empty,done){
+  const li=$(id);li.classList.toggle("blank",!!empty);li.classList.toggle("done",!!done);
+}
 function fillDetail(ev){
   $("edTitle").textContent=ev.title||"";
   $("edMeta").textContent=[fmtDateK(ev.date),ev.time,ev.authorName&&("작성 "+ev.authorName)].filter(Boolean).join(" · ");
-  const desc=(ev.desc||"").trim(),note=(ev.note||"").trim();
-  $("edDesc").textContent=desc;$("edDescWrap").style.display=desc?"":"none";
-  $("edNote").textContent=note;$("edNoteWrap").style.display=note?"":"none";
-  const can=canEditPost(ev),mine=me&&ev.author===me.uid;
-  $("edEdit").style.display=can?"":"none";$("edDelete").style.display=can?"":"none";
+  const desc=(ev.desc||"").trim(),note=(ev.note||"").trim(),exec=(ev.execNote||"").trim(),res=(ev.result||"").trim();
+  const k=evStKey(ev),can=canEditPost(ev),mine=me&&ev.author===me.uid;
+  /* 📝 계획 */
+  $("flPlanB").textContent=desc||(note?"":"입력된 내용이 없어요");
+  $("flPlanB").style.display=(desc||!note)?"":"none";
+  $("flPlanNoteT").textContent=note;$("flPlanNote").style.display=note?"":"none";
+  setFlow("flPlan","",!desc&&!note,false);
+  /* ▶ 실행 */
+  const rb=$("flRunB");
+  if(k==="planned"){rb.textContent="아직 실행 전이에요 (예정)";}
+  else{rb.innerHTML=`<span class="st-tag s-${k}" style="margin-top:0">${stDot(k)}${ST_LABEL[k]}</span>`;}
+  setFlow("flRun","",k==="planned",k==="done");
+  const who=ev.doneBy?userName(ev.doneBy):"",ts=fmtTs(ev.doneAt);
+  $("flRunSub").textContent=(who||ts)?("기록 "+[who,ts].filter(Boolean).join(" · ")):"";
+  /* 📋 실행 내용 / ✅ 결과 */
+  $("flExecB").textContent=exec||"아직 없음";setFlow("flExec","",!exec,false);
+  $("flResB").textContent=res||"아직 없음";setFlow("flRes","",!res,!!res);
+  /* 기록 권한(작성자+관리자): 상태 빠른 변경 칩, 결과 기록/수정 */
+  const q=$("edQuick");
+  q.style.display=can&&!_recOpen?"":"none";
+  q.innerHTML=can?ST_ORDER.map(s=>`<button type="button" class="st-chip s-${s}${(ev.status||"")===s?" on":""}" data-qst="${s}">${ST_LABEL[s]}</button>`).join(""):"";
+  $("edRecord").style.display=can&&!_recOpen?"":"none";
+  $("edRecord").textContent=(exec||res)?"결과 수정":"결과 기록";
+  $("recForm").style.display=can&&_recOpen?"":"none";
+  $("edEdit").style.display=can&&!_recOpen?"":"none";$("edDelete").style.display=can&&!_recOpen?"":"none";
   /* 남의 글: 일반 회원=작성자만 안내, 관리자=관리자 권한 안내 */
-  $("edOnly").textContent=can?"관리자 권한으로 수정·삭제할 수 있어요":"작성자만 수정·삭제할 수 있어요";$("edOnly").style.display=mine?"none":"";
+  $("edOnly").textContent=can?"관리자 권한으로 수정·삭제·기록할 수 있어요":"작성자만 수정·삭제·결과 기록을 할 수 있어요";$("edOnly").style.display=mine?"none":"";
 }
+/* 결과 기록 폼 */
+function renderRfChips(){
+  $("rfStatus").innerHTML=ST_ORDER.map(s=>`<button type="button" class="st-chip s-${s}${_rfStatus===s?" on":""}" data-rst="${s}">${ST_LABEL[s]}</button>`).join("");
+}
+function openRecForm(){
+  const ev=_detailId&&evById(_detailId);if(!ev||!canEditPost(ev))return;
+  _recOpen=true;
+  _rfStatus=(ev.status&&ev.status!=="planned")?ev.status:(isPastEv(ev)?"done":"planned");
+  $("rfExec").value=ev.execNote||"";$("rfRes").value=ev.result||"";
+  renderRfChips();fillDetail(ev);
+  setTimeout(()=>{try{$("recForm").scrollIntoView({block:"nearest",behavior:"smooth"});}catch(e){}},60);
+}
+function closeRecForm(){_recOpen=false;const ev=_detailId&&evById(_detailId);if(ev)fillDetail(ev);}
+function patchPast(id,patch){const e=_pastRange.find(x=>x.id===id);if(e){Object.keys(patch).forEach(k=>{if(patch[k]===undefined)delete e[k];else e[k]=patch[k];});}}
+async function writeRecord(ev,fields,okMsg){
+  if(_saving)return;_saving=true;
+  const data={...fields};
+  await guardWrite("일정 기록을 저장하지 못했어요",async()=>{
+    if(!navigator.onLine){const oe=new Error("offline");oe.code="unavailable";throw oe;}
+    await M.updateDoc(M.doc(fb.db,"events",ev.id),data);
+    const loc={};Object.keys(fields).forEach(k=>{const v=fields[k];loc[k]=(v&&v._methodName==="deleteField")?undefined:(k==="doneAt"?new Date():v);});
+    patchPast(ev.id,loc);
+    _recOpen=false;renderAlert();
+    const cur=evById(ev.id);if(cur&&_detailId===ev.id)fillDetail(cur);
+    toast(okMsg);
+  },"기록이 저장되지 않았어요. 입력한 내용은 그대로 남아 있어요.");
+  _saving=false;
+}
+$("rfStatus").addEventListener("click",e=>{const c=e.target.closest("[data-rst]");if(!c)return;_rfStatus=c.dataset.rst;renderRfChips();});
+$("edRecord").onclick=openRecForm;
+$("rfCancel").onclick=closeRecForm;
+$("rfSave").onclick=()=>{
+  const ev=_detailId&&evById(_detailId);if(!ev||!canEditPost(ev))return;
+  const exec=$("rfExec").value.trim(),res=$("rfRes").value.trim();
+  writeRecord(ev,{status:_rfStatus,execNote:exec||M.deleteField(),result:res||M.deleteField(),doneAt:M.serverTimestamp(),doneBy:me.uid},"기록했어요");
+};
+$("edQuick").addEventListener("click",e=>{
+  const c=e.target.closest("[data-qst]");if(!c)return;
+  const ev=_detailId&&evById(_detailId);if(!ev||!canEditPost(ev)||(ev.status||"")===c.dataset.qst)return;
+  const f={status:c.dataset.qst};
+  if(f.status==="done"||f.status==="canceled"){f.doneAt=M.serverTimestamp();f.doneBy=me.uid;}
+  writeRecord(ev,f,"상태를 "+ST_LABEL[f.status]+"(으)로 바꿨어요");
+});
+$("eventDetailSheet").addEventListener("focusin",e=>{if(/^(TEXTAREA)$/.test(e.target.tagName))setTimeout(()=>{try{e.target.scrollIntoView({block:"center",behavior:"smooth"});}catch(_){}},320);});
 function openDetail(id){
   const ev=evById(id);if(!ev)return;
   _detailId=id;fillDetail(ev);openOv("eventDetailSheet");
   history.pushState({tab:"tabCal",ev:"detail"},"");
 }
-function hideDetail(){_detailId=null;closeOv("eventDetailSheet");}
+function hideDetail(){_detailId=null;_recOpen=false;closeOv("eventDetailSheet");}
 function evBackIf(kind){const s=history.state;if(s&&s.ev===kind)history.back();}
 function closeDetail(){if(!_detailId)return;hideDetail();evBackIf("detail");}
 $("edClose").onclick=closeDetail;
@@ -1626,6 +1817,7 @@ async function deleteEvent(id){
   await guardWrite("일정을 삭제하지 못했어요",async()=>{
     if(!navigator.onLine){const oe=new Error("offline");oe.code="unavailable";throw oe;}
     await M.deleteDoc(M.doc(fb.db,"events",id));
+    _pastRange=_pastRange.filter(e=>e.id!==id);renderAlert();
     if(_detailId===id)closeDetail();
     if(curEvent&&curEvent.id===id)closeForm();
     toast("삭제했어요");
@@ -1633,10 +1825,63 @@ async function deleteEvent(id){
 }
 $("evDelete").onclick=()=>{if(curEvent)deleteEvent(curEvent.id);};
 
+/* ---- 결과 미기록 목록 / 이 달 정리 시트 (2026-11-10) ---- */
+function openSheet2(id){_sheet2=id;openOv(id);history.pushState({tab:"tabCal",ev:"sheet"},"");}
+function hideSheet2(){if(_sheet2){closeOv(_sheet2);_sheet2=null;}}
+function closeSheet2(){if(!_sheet2)return;hideSheet2();evBackIf("sheet");}
+$("calAlert").onclick=()=>{
+  const l=missingList();if(!l.length)return;
+  $("evListBody").innerHTML=l.map(e=>evtCard(e,"past",true)).join("");
+  openSheet2("evListSheet");
+};
+$("evListBody").addEventListener("click",ev=>{
+  const c=ev.target.closest("[data-ev]");if(!c)return;
+  const id=c.dataset.ev;hideSheet2();
+  if(history.state&&history.state.ev==="sheet")history.replaceState({tab:"tabCal"},"");
+  openDetail(id);
+});
+$("evListClose").onclick=closeSheet2;
+$("evMonthClose").onclick=closeSheet2;
+function oneLine(t){return String(t||"").replace(/\s*\n+\s*/g," / ").trim();}
+function monthRows(){return events.filter(e=>String(e.date||"").slice(0,7)===_evKey).sort(evSort);}
+function monthText(rows){
+  const y=calYM.getFullYear(),m=calYM.getMonth()+1;
+  const lines=[`[팀톡 일정 정리] ${y}년 ${m}월 (${rows.length}건)`];
+  rows.forEach(e=>{
+    const d=ymdParts(e.date),k=evStKey(e),res=oneLine(e.result);
+    lines.push(`${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]}) ${e.title} | ${ST_LABEL[k]}${res?" | 결과: "+res:""}`);
+  });
+  return lines.join("\n");
+}
+function openMonthSum(){
+  const rows=monthRows(),y=calYM.getFullYear(),m=calYM.getMonth()+1;
+  $("evMonthTitle").textContent=`${y}년 ${m}월 정리`;
+  const cnt={};rows.forEach(e=>{const k=evStKey(e);cnt[k]=(cnt[k]||0)+1;});
+  const sum=["done","doing","planned","canceled","nores"].filter(k=>cnt[k]).map(k=>`${ST_LABEL[k]} ${cnt[k]}`).join(" · ");
+  $("evMonthBody").innerHTML=rows.length
+    ?`<p class="sum-hint">총 ${rows.length}건${sum?" · "+sum:""}</p><table class="sum-table"><thead><tr><th>날짜</th><th>제목 · 결과</th><th>상태</th></tr></thead><tbody>`
+      +rows.map(e=>{const d=ymdParts(e.date),k=evStKey(e),res=oneLine(e.result);
+        return `<tr class="s-${k}"><td class="d">${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})</td><td class="t">${esc(e.title)}${res?`<span class="r">${esc(res)}</span>`:""}</td><td class="s">${stDot(k)}${ST_LABEL[k]}</td></tr>`;}).join("")
+      +"</tbody></table>"
+    :`<div class="empty-note">${_monthLoaded?"이 달에는 일정이 없어요":"불러오는 중…"}</div>`;
+  $("evMonthCopy").disabled=!rows.length;
+  openSheet2("evMonthSheet");
+}
+$("btnMonthSum").onclick=openMonthSum;
+async function copyText(t){
+  try{await navigator.clipboard.writeText(t);return true;}catch(e){}
+  try{const ta=document.createElement("textarea");ta.value=t;ta.setAttribute("readonly","");ta.style.cssText="position:fixed;left:-9999px;top:0";document.body.appendChild(ta);ta.select();const ok=document.execCommand("copy");ta.remove();return ok;}catch(e){return false;}
+}
+$("evMonthCopy").onclick=async()=>{
+  const rows=monthRows();if(!rows.length)return;
+  toast(await copyText(monthText(rows))?"복사했어요 — 채팅·보고에 붙여넣으세요":"복사하지 못했어요. 브라우저 권한을 확인하세요");
+};
+
 /* ---- 뒤로가기 연결(popstate에서 호출) ---- */
-function evOpenKind(){return curTab!=="tabCal"?null:_picking?"form":_detailId?"detail":null;}
+function evOpenKind(){return curTab!=="tabCal"?null:_picking?"form":_detailId?"detail":_sheet2?"sheet":null;}
 function evSyncNav(st){
   if(_detailId&&st.ev!=="detail")hideDetail();
+  if(_sheet2&&st.ev!=="sheet")hideSheet2();
   if(_picking&&st.tab==="tabCal"&&st.ev!=="form")hideForm();
 }
 
@@ -1657,7 +1902,7 @@ $("evtForm").addEventListener("focusin",()=>{calKbFit();setTimeout(calKbFit,120)
 if(window.visualViewport)window.visualViewport.addEventListener("resize",calKbFit);
 window.addEventListener("resize",calKbFit);
 /* 앱을 켜 둔 채 날짜가 바뀌어도 '오늘' 표시·다가오는 일정 기준이 맞도록 복귀 시 다시 그림 */
-document.addEventListener("visibilitychange",()=>{if(!document.hidden&&me&&curTab==="tabCal")drawCal();});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&me&&curTab==="tabCal"){drawCal();loadPastRange();}});
 
 /* ============================================================
    앱 잠금 + Face ID (마이플래너/식단운동에서 재사용)
@@ -1725,7 +1970,7 @@ document.addEventListener("visibilitychange",()=>{
    ============================================================ */
 function openOv(id){$(id).classList.add("on");}
 function closeOv(id){$(id).classList.remove("on");}
-document.querySelectorAll(".overlay").forEach(o=>o.onclick=e=>{if(e.target!==o)return;if(o.id==="eventDetailSheet")closeDetail();else o.classList.remove("on");});
+document.querySelectorAll(".overlay").forEach(o=>o.onclick=e=>{if(e.target!==o)return;if(o.id==="eventDetailSheet")closeDetail();else if(o.id==="evListSheet"||o.id==="evMonthSheet")closeSheet2();else o.classList.remove("on");});
 
 /* ============================================================
    서버 설정
