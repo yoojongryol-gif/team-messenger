@@ -278,7 +278,7 @@ input,textarea{font-family:inherit;font-size:16px}
 .ed-only{font-size:12px;color:var(--muted);text-align:center;margin:0 0 10px}
 .ed-btns{display:flex;flex-wrap:wrap;gap:8px}
 .ed-btns .btn{margin-top:0;padding-left:4px;padding-right:4px;flex:1 1 28%;width:auto}
-.ed-btns #edRecord{flex-basis:100%}
+.ed-btns #edRecord,.ed-btns #edClone{flex-basis:100%}
 
 /* ---- 일정 상태·결과 기록 (2026-11-10) : 예정 회색·진행중 파랑·완료 초록·취소 흐림·결과 미기록 주황 ---- */
 .sd{display:inline-block;flex:none;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px;background:var(--st-planned)}
@@ -331,6 +331,23 @@ input,textarea{font-family:inherit;font-size:16px}
 .sum-table td .r{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 .sum-table tr.s-canceled td.t{text-decoration:line-through;opacity:.6}
 .copy-row{display:flex;gap:8px}.copy-row .btn{margin:0}.copy-row .btn.ghost{flex:0 0 32%}
+
+/* ---- 결과 원탭·불러오기 (2026-11-11) ---- */
+.load-btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;margin:0 0 12px;border-radius:12px;border:1px dashed var(--accent);background:var(--accent-soft);color:var(--text);font-weight:700;font-size:14px}
+.qa{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.qa-b{flex:1 1 0;min-width:92px;min-height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:14px;font-weight:700}
+.qa-b.ok{border-color:var(--st-done);background:rgba(34,197,94,.16)}
+.qa-b.no{color:var(--muted)}
+.qa-link{min-height:44px;padding:0 4px;background:transparent;border:none;color:var(--accent2);font-size:13px;font-weight:700;text-decoration:underline}
+.memo-row{display:flex;gap:6px;margin-top:8px;align-items:center}
+.memo-row input{flex:1;min-width:0;min-height:44px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:0 11px;font-size:14px;outline:none}
+.memo-row .qa-b{flex:none;min-width:56px}
+#undoToast{position:fixed;left:50%;bottom:calc(90px + var(--safe-b));transform:translateX(-50%);display:none;align-items:center;gap:6px;background:#000e;color:#fff;padding:4px 4px 4px 16px;border-radius:24px;font-size:14px;z-index:460;max-width:92%}
+#undoToast.on{display:flex}
+#undoToast button{min-height:44px;min-width:76px;border:none;border-radius:20px;background:rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:14px}
+.pick-row{display:block;width:100%;text-align:left;min-height:56px;padding:10px 12px;margin-bottom:8px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--text)}
+.pick-row .pt{font-size:14.5px;font-weight:700;line-height:1.35;word-break:break-word}
+.pick-row .ps{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 문서 뷰어 */
 #docViewer{position:fixed;inset:0;background:var(--bg);z-index:360;display:none;flex-direction:column}
 .doc-top{display:flex;align-items:center;gap:8px;padding:calc(8px + var(--safe-t)) 8px 8px;background:#000;border-bottom:1px solid var(--line)}
@@ -414,6 +431,7 @@ input,textarea{font-family:inherit;font-size:16px}
         <div class="cal-tools"><button class="add-btn" id="btnToggleEvtForm">＋ 일정 추가</button><button type="button" class="tool-btn" id="btnMonthSum">📋 이 달 정리</button></div>
         <div class="form-card" id="evtForm" hidden>
           <div class="form-head"><button type="button" class="form-back" id="evtFormBack">← 닫기</button><b id="evtFormTitle">일정 추가</b></div>
+          <button type="button" class="load-btn" id="btnLoadPast">📋 지난 일정 불러오기</button>
           <div class="field"><label for="evTitle">제목</label><input id="evTitle" maxlength="40" autocomplete="off" placeholder="예: 거래처 미팅"></div>
           <div class="field"><label>날짜</label><div class="date-sum" id="evtDateSum" role="status"></div><div class="hint">위 달력에서 날짜를 누르면 바뀌어요</div></div>
           <div class="field"><label for="evTime">시간 (선택)</label><input id="evTime" type="time"></div>
@@ -532,6 +550,8 @@ input,textarea{font-family:inherit;font-size:16px}
   </div>
 </div>
 
+<div id="undoToast" role="status" aria-live="polite"><span id="undoMsg"></span><button type="button" id="undoBtn">되돌리기</button></div>
+
 <!-- 일정 상세 시트 (전체 내용·특이사항, 작성자·관리자만 수정·삭제) -->
 <div class="overlay" id="eventDetailSheet">
   <div class="sheet">
@@ -541,17 +561,16 @@ input,textarea{font-family:inherit;font-size:16px}
       <li class="fl" id="flPlan"><span class="fl-ic">📝</span><div class="fl-body"><div class="fl-h">계획</div><div class="fl-b" id="flPlanB"></div><div class="fl-note" id="flPlanNote" style="display:none"><span class="ed-label">특이사항</span><span id="flPlanNoteT"></span></div></div></li>
       <li class="fl" id="flRun"><span class="fl-ic">▶</span><div class="fl-body"><div class="fl-h">실행</div><div class="fl-b" id="flRunB"></div><div class="fl-sub" id="flRunSub"></div><div class="st-row" id="edQuick" style="display:none"></div></div></li>
       <li class="fl" id="flExec"><span class="fl-ic">📋</span><div class="fl-body"><div class="fl-h">실행 내용</div><div class="fl-b" id="flExecB"></div></div></li>
-      <li class="fl" id="flRes"><span class="fl-ic">✅</span><div class="fl-body"><div class="fl-h">결과</div><div class="fl-b" id="flResB"></div></div></li>
+      <li class="fl" id="flRes"><span class="fl-ic">✅</span><div class="fl-body"><div class="fl-h">결과·메모</div><div class="fl-b" id="flResB"></div></div></li>
     </ol>
     <div class="rec-form" id="recForm" style="display:none">
-      <div class="field"><label>상태</label><div class="st-row" id="rfStatus" style="margin-top:0"></div></div>
-      <div class="field"><label for="rfExec">📋 실행 내용 (실제로 한 일)</label><textarea id="rfExec" rows="3" maxlength="1000" placeholder="누구와 무엇을 했는지"></textarea></div>
-      <div class="field"><label for="rfRes">✅ 결과 (성과·다음 할 일)</label><textarea id="rfRes" rows="3" maxlength="1000" placeholder="어떻게 됐는지, 다음에 할 일"></textarea></div>
+      <div class="field"><label for="rfRes">메모 (한 줄)</label><input id="rfRes" maxlength="200" autocomplete="off" placeholder="결과·다음 할 일을 한 줄로"></div>
       <div class="rf-btns"><button class="btn ghost" id="rfCancel" type="button">취소</button><button class="btn" id="rfSave" type="button">저장</button></div>
     </div>
     <p class="ed-only" id="edOnly" style="display:none">작성자만 수정·삭제할 수 있어요</p>
     <div class="ed-btns">
-      <button class="btn" id="edRecord">결과 기록</button>
+      <button class="btn" id="edClone">↻ 이 일정으로 새로 만들기</button>
+      <button class="btn ghost" id="edRecord">메모 추가</button>
       <button class="btn ghost" id="edEdit">수정</button>
       <button class="btn danger" id="edDelete">삭제</button>
       <button class="btn ghost" id="edClose">닫기</button>
@@ -563,9 +582,18 @@ input,textarea{font-family:inherit;font-size:16px}
 <div class="overlay" id="evListSheet">
   <div class="sheet">
     <h3>결과 안 적은 지난 일정</h3>
-    <p class="sum-hint">최근 60일, 내가 기록할 수 있는 일정만 보여요. 눌러서 결과를 적어 주세요.</p>
+    <p class="sum-hint">최근 60일, 내가 기록할 수 있는 일정만 보여요. 줄마다 ✅ 완료·✖ 취소를 바로 누르세요.</p>
     <div id="evListBody"></div>
     <button class="btn ghost" id="evListClose" type="button">닫기</button>
+  </div>
+</div>
+<div class="overlay" id="evPickSheet">
+  <div class="sheet">
+    <h3>지난 일정 불러오기</h3>
+    <p class="sum-hint">하나를 누르면 제목·시간·내용·특이사항이 폼에 채워져요. 날짜는 지금 고른 날짜 그대로예요.</p>
+    <div class="field"><input id="pickQ" type="search" autocomplete="off" placeholder="제목·내용으로 찾기"></div>
+    <div id="pickBody"></div>
+    <button class="btn ghost" id="pickClose" type="button">닫기</button>
   </div>
 </div>
 <div class="overlay" id="evMonthSheet">
@@ -643,7 +671,7 @@ input,textarea{font-family:inherit;font-size:16px}
 /* ============================================================
    팀톡 — 업무용 메신저 (Firebase)
    ============================================================ */
-const APP_VER = "2026.11.10a"; // sw.js의 VER("teamtalk-"+APP_VER)과 반드시 함께 올린다. 2026-11-10 일정 상태(예정·진행중·완료·취소)+실행 내용·결과 기록+결과 미기록 알림+이 달 정리. 2026-11-06 관리자 모드(UID 1개·남의 글 수정삭제·회원 내보내기·초대코드 교체). 2026-11-05 일정 화면 5959식 개편+특이사항(note). 2026-11-01 품질수리 7호(실패패널·FAULT·뒤로가기·따뜻한 바탕). 이전 1.0.1=파일뷰어 CORS 수리
+const APP_VER = "2026.11.11a"; // sw.js의 VER("teamtalk-"+APP_VER)과 반드시 함께 올린다. 2026-11-11 지난 일정 불러오기·이 일정으로 새로 만들기+결과 원탭(완료·취소·되돌리기·한 줄 메모). 2026-11-10 일정 상태(예정·진행중·완료·취소)+실행 내용·결과 기록+결과 미기록 알림+이 달 정리. 2026-11-06 관리자 모드(UID 1개·남의 글 수정삭제·회원 내보내기·초대코드 교체). 2026-11-05 일정 화면 5959식 개편+특이사항(note). 2026-11-01 품질수리 7호(실패패널·FAULT·뒤로가기·따뜻한 바탕). 이전 1.0.1=파일뷰어 CORS 수리
 
 /* ---------- Firebase 설정 (teamtalk-efb25 프로젝트, 2026-06-18 연결) ----------
    웹 설정값은 비밀이 아니라 공개용 — 보안은 firestore.rules/storage.rules로 처리 */
@@ -1566,7 +1594,9 @@ function moveMonth(delta){
 /* ---- 화면 ---- */
 function drawCal(){
   if(!calYM)return;
-  renderCalendar();renderDayList();renderUpcoming();renderPast();renderAlert();
+  const hadMemo=document.activeElement&&document.activeElement.classList&&document.activeElement.classList.contains("memo-in");
+  renderCalendar();renderDayList();renderUpcoming();renderPast();renderAlert();renderEvList();
+  if(hadMemo)focusMemo();
   if(_detailId){const ev=evById(_detailId);if(ev)fillDetail(ev);else if(_monthLoaded&&_upLoaded)closeDetail();}
 }
 function renderCalendar(){
@@ -1602,9 +1632,18 @@ function evtCard(e,mode,noDel){
       ${res?`<div class="ln rs"><span class="lb">결과</span><span class="tx">${esc(res)}</span></div>`:""}
       ${desc?`<div class="ln"><span class="lb">내용</span><span class="tx">${esc(desc)}</span></div>`:""}
       ${note?`<div class="ln nt"><span class="lb">특이사항</span><span class="tx">${esc(note)}</span></div>`:""}
+      ${quickActs(e)}
     </div>
     ${mine?`<button type="button" class="del" data-del="${esc(e.id)}" aria-label="삭제">✕</button>`:""}
   </div>`;
+}
+/* 결과 원탭: 오늘·지난 일정 + 기록 권한(작성자·관리자)일 때만. 완료·취소 전=[✅ 완료][✖ 취소], 후=메모 추가/수정 링크 */
+function quickActs(e){
+  if(!canEditPost(e)||String(e.date||"")>todayStr())return "";
+  const id=esc(e.id);
+  if(_memoId===e.id)return `<div class="memo-row"><input class="memo-in" maxlength="200" autocomplete="off" placeholder="한 줄 메모" value="${esc(_memoDraft)}" aria-label="한 줄 메모"><button type="button" class="qa-b ok" data-act="memosave" data-id="${id}">저장</button><button type="button" class="qa-b" data-act="memocancel" data-id="${id}">취소</button></div>`;
+  if(e.status!=="done"&&e.status!=="canceled")return `<div class="qa"><button type="button" class="qa-b ok" data-act="done" data-id="${id}">✅ 완료</button><button type="button" class="qa-b no" data-act="canceled" data-id="${id}">✖ 취소</button></div>`;
+  return `<div class="qa"><button type="button" class="qa-link" data-act="memo" data-id="${id}">${(e.result||"").trim()?"메모 수정":"메모 추가"}</button></div>`;
 }
 function renderDayList(){
   const el=$("dayEventList");
@@ -1641,6 +1680,7 @@ $("btnPastToggle").onclick=()=>{_pastOpen=!_pastOpen;renderPast();};
 
 /* 화면 탭은 위임 하나로 처리 */
 $("calScroll").addEventListener("click",ev=>{
+  if(actClick(ev))return;
   const c=ev.target.closest("button,[data-ev]");if(!c)return;
   if(c.dataset.calMove){moveMonth(+c.dataset.calMove);return;}
   if(c.dataset.day){tapDay(c.dataset.day);return;}
@@ -1654,6 +1694,7 @@ $("calScroll").addEventListener("click",ev=>{
   if(c.dataset.ev)openDetail(c.dataset.ev);
 });
 $("calScroll").addEventListener("keydown",ev=>{
+  if(memoKey(ev))return;
   if((ev.key==="Enter"||ev.key===" ")&&ev.target.dataset&&ev.target.dataset.ev){ev.preventDefault();openDetail(ev.target.dataset.ev);}
 });
 function tapDay(ds){
@@ -1688,59 +1729,103 @@ function fillDetail(ev){
   /* 📋 실행 내용 / ✅ 결과 */
   $("flExecB").textContent=exec||"아직 없음";setFlow("flExec","",!exec,false);
   $("flResB").textContent=res||"아직 없음";setFlow("flRes","",!res,!!res);
-  /* 기록 권한(작성자+관리자): 상태 빠른 변경 칩, 결과 기록/수정 */
-  const q=$("edQuick");
+  /* 기록 권한(작성자+관리자): 원탭 완료·취소, 한 줄 메모 */
+  $("flExec").style.display=exec?"":"none";
+  const q=$("edQuick"),fin=k==="done"||k==="canceled";
   q.style.display=can&&!_recOpen?"":"none";
-  q.innerHTML=can?ST_ORDER.map(s=>`<button type="button" class="st-chip s-${s}${(ev.status||"")===s?" on":""}" data-qst="${s}">${ST_LABEL[s]}</button>`).join(""):"";
+  q.innerHTML=can?(fin?`<button type="button" class="qa-b" data-qst="planned">↩ 예정으로 되돌리기</button>`
+    :`<button type="button" class="qa-b ok" data-qst="done">✅ 완료</button><button type="button" class="qa-b no" data-qst="canceled">✖ 취소</button>`):"";
   $("edRecord").style.display=can&&!_recOpen?"":"none";
-  $("edRecord").textContent=(exec||res)?"결과 수정":"결과 기록";
+  $("edRecord").textContent=res?"메모 수정":"메모 추가";
   $("recForm").style.display=can&&_recOpen?"":"none";
+  $("edClone").style.display=_recOpen?"none":"";
   $("edEdit").style.display=can&&!_recOpen?"":"none";$("edDelete").style.display=can&&!_recOpen?"":"none";
   /* 남의 글: 일반 회원=작성자만 안내, 관리자=관리자 권한 안내 */
   $("edOnly").textContent=can?"관리자 권한으로 수정·삭제·기록할 수 있어요":"작성자만 수정·삭제·결과 기록을 할 수 있어요";$("edOnly").style.display=mine?"none":"";
 }
-/* 결과 기록 폼 */
-function renderRfChips(){
-  $("rfStatus").innerHTML=ST_ORDER.map(s=>`<button type="button" class="st-chip s-${s}${_rfStatus===s?" on":""}" data-rst="${s}">${ST_LABEL[s]}</button>`).join("");
-}
+/* 결과 기록: 원탭(완료·취소·되돌리기) + 한 줄 메모. 새 메모는 result에 저장, execNote는 표시만 유지 */
+const _busy=new Set();
+let _memoId=null,_memoDraft="";
 function openRecForm(){
   const ev=_detailId&&evById(_detailId);if(!ev||!canEditPost(ev))return;
-  _recOpen=true;
-  _rfStatus=(ev.status&&ev.status!=="planned")?ev.status:(isPastEv(ev)?"done":"planned");
-  $("rfExec").value=ev.execNote||"";$("rfRes").value=ev.result||"";
-  renderRfChips();fillDetail(ev);
-  setTimeout(()=>{try{$("recForm").scrollIntoView({block:"nearest",behavior:"smooth"});}catch(e){}},60);
+  _recOpen=true;$("rfRes").value=oneLine(ev.result);fillDetail(ev);
+  setTimeout(()=>{try{$("recForm").scrollIntoView({block:"nearest",behavior:"smooth"});$("rfRes").focus();}catch(e){}},60);
 }
 function closeRecForm(){_recOpen=false;const ev=_detailId&&evById(_detailId);if(ev)fillDetail(ev);}
-function patchPast(id,patch){const e=_pastRange.find(x=>x.id===id);if(e){Object.keys(patch).forEach(k=>{if(patch[k]===undefined)delete e[k];else e[k]=patch[k];});}}
-async function writeRecord(ev,fields,okMsg){
-  if(_saving)return;_saving=true;
-  const data={...fields};
-  await guardWrite("일정 기록을 저장하지 못했어요",async()=>{
-    if(!navigator.onLine){const oe=new Error("offline");oe.code="unavailable";throw oe;}
-    await M.updateDoc(M.doc(fb.db,"events",ev.id),data);
-    const loc={};Object.keys(fields).forEach(k=>{const v=fields[k];loc[k]=(v&&v._methodName==="deleteField")?undefined:(k==="doneAt"?new Date():v);});
-    patchPast(ev.id,loc);
-    _recOpen=false;renderAlert();
-    const cur=evById(ev.id);if(cur&&_detailId===ev.id)fillDetail(cur);
-    toast(okMsg);
-  },"기록이 저장되지 않았어요. 입력한 내용은 그대로 남아 있어요.");
-  _saving=false;
+function allEvLists(){return [events,upEvents,_pastRange,_histList||[]];}
+function patchLocal(id,patch){allEvLists().forEach(l=>{const e=l.find(x=>x.id===id);if(e)Object.keys(patch).forEach(k=>{if(patch[k]===undefined)delete e[k];else e[k]=patch[k];});});}
+/* 저장 1건(문서별 잠금). 성공 true */
+async function writeRecord(ev,fields){
+  if(_busy.has(ev.id))return false;_busy.add(ev.id);
+  let ok=false;
+  try{
+    ok=await guardWrite("일정 기록을 저장하지 못했어요",async()=>{
+      if(!navigator.onLine){const oe=new Error("offline");oe.code="unavailable";throw oe;}
+      await M.updateDoc(M.doc(fb.db,"events",ev.id),{...fields});
+      const loc={};Object.keys(fields).forEach(k=>{const v=fields[k],m=v&&v._methodName;loc[k]=m==="deleteField"?undefined:(m==="serverTimestamp"?new Date():v);});
+      patchLocal(ev.id,loc);
+      _recOpen=false;if(calYM)drawCal();
+    },"기록이 저장되지 않았어요. 입력한 내용은 그대로 남아 있어요.");
+  }finally{_busy.delete(ev.id);}
+  return ok;
 }
-$("rfStatus").addEventListener("click",e=>{const c=e.target.closest("[data-rst]");if(!c)return;_rfStatus=c.dataset.rst;renderRfChips();});
-$("edRecord").onclick=openRecForm;
+let _undoT=null,_undoFn=null;
+function undoToast(msg,fn){
+  _undoFn=fn;$("undoMsg").textContent=msg;$("undoToast").classList.add("on");
+  clearTimeout(_undoT);_undoT=setTimeout(hideUndo,3000);
+}
+function hideUndo(){clearTimeout(_undoT);_undoFn=null;$("undoToast").classList.remove("on");}
+$("undoBtn").onclick=()=>{const f=_undoFn;hideUndo();if(f)f();};
+/* 원탭: 확인창 없이 즉시 저장 + 3초 되돌리기 */
+async function quickSet(id,status){
+  const ev=evById(id);if(!ev||!canEditPost(ev)||(ev.status||"")===status)return;
+  const prev={status:ev.status,doneAt:ev.doneAt,doneBy:ev.doneBy};
+  const f={status};
+  if(status==="done"||status==="canceled"){f.doneAt=M.serverTimestamp();f.doneBy=me.uid;}
+  else{f.doneAt=M.deleteField();f.doneBy=M.deleteField();}
+  if(!(await writeRecord(ev,f)))return;
+  undoToast(status==="done"?"완료로 기록했어요":status==="canceled"?"취소로 기록했어요":"예정으로 되돌렸어요",async()=>{
+    const cur=evById(id);if(!cur)return;
+    const u={status:prev.status||M.deleteField(),doneAt:prev.doneAt!==undefined?prev.doneAt:M.deleteField(),doneBy:prev.doneBy!==undefined?prev.doneBy:M.deleteField()};
+    if(await writeRecord(cur,u))toast("되돌렸어요");
+  });
+}
+async function saveMemo(id,text){
+  const ev=evById(id);if(!ev||!canEditPost(ev))return;
+  const t=oneLine(text);
+  if(await writeRecord(ev,{result:t||M.deleteField()})){_memoId=null;_memoDraft="";if(calYM)drawCal();toast(t?"메모를 저장했어요":"메모를 지웠어요");}
+}
+function focusMemo(){setTimeout(()=>{const i=document.querySelector(".memo-in");if(i){try{i.focus();}catch(e){}}},30);}
+/* 카드·목록 안의 data-act 버튼(원탭 완료/취소/메모) 처리. 처리했으면 true */
+function actClick(ev){
+  const b=ev.target.closest("[data-act]");
+  if(!b){return !!ev.target.closest(".memo-row");} // 메모 입력칸 누름은 카드 열기로 새지 않게
+  ev.stopPropagation();
+  const id=b.dataset.id,a=b.dataset.act;
+  if(a==="done"||a==="canceled"){quickSet(id,a);return true;}
+  if(a==="memo"){const e=evById(id);_memoId=id;_memoDraft=e?oneLine(e.result):"";drawCal();focusMemo();return true;}
+  if(a==="memocancel"){_memoId=null;_memoDraft="";drawCal();return true;}
+  if(a==="memosave"){const i=b.closest(".memo-row").querySelector(".memo-in");saveMemo(id,i?i.value:"");return true;}
+  return false;
+}
+function memoKey(ev){
+  const t=ev.target;if(!t||!t.classList||!t.classList.contains("memo-in"))return false;
+  if(ev.key==="Enter"){ev.preventDefault();const b=t.closest(".memo-row").querySelector('[data-act="memosave"]');if(b)b.click();}
+  return true;
+}
+document.addEventListener("input",e=>{if(e.target.classList&&e.target.classList.contains("memo-in"))_memoDraft=e.target.value;});
+$("evListBody").addEventListener("keydown",memoKey);
 $("rfCancel").onclick=closeRecForm;
-$("rfSave").onclick=()=>{
+$("rfRes").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("rfSave").click();}});
+$("edRecord").onclick=openRecForm;
+$("rfSave").onclick=async()=>{
   const ev=_detailId&&evById(_detailId);if(!ev||!canEditPost(ev))return;
-  const exec=$("rfExec").value.trim(),res=$("rfRes").value.trim();
-  writeRecord(ev,{status:_rfStatus,execNote:exec||M.deleteField(),result:res||M.deleteField(),doneAt:M.serverTimestamp(),doneBy:me.uid},"기록했어요");
+  const t=oneLine($("rfRes").value);
+  if(await writeRecord(ev,{result:t||M.deleteField()}))toast(t?"메모를 저장했어요":"메모를 지웠어요");
 };
 $("edQuick").addEventListener("click",e=>{
-  const c=e.target.closest("[data-qst]");if(!c)return;
-  const ev=_detailId&&evById(_detailId);if(!ev||!canEditPost(ev)||(ev.status||"")===c.dataset.qst)return;
-  const f={status:c.dataset.qst};
-  if(f.status==="done"||f.status==="canceled"){f.doneAt=M.serverTimestamp();f.doneBy=me.uid;}
-  writeRecord(ev,f,"상태를 "+ST_LABEL[f.status]+"(으)로 바꿨어요");
+  const c=e.target.closest("[data-qst]");if(!c||!_detailId)return;
+  quickSet(_detailId,c.dataset.qst);
 });
 $("eventDetailSheet").addEventListener("focusin",e=>{if(/^(TEXTAREA)$/.test(e.target.tagName))setTimeout(()=>{try{e.target.scrollIntoView({block:"center",behavior:"smooth"});}catch(_){}},320);});
 function openDetail(id){
@@ -1759,6 +1844,56 @@ $("edEdit").onclick=()=>{
   showForm(ev);
 };
 $("edDelete").onclick=()=>{if(_detailId)deleteEvent(_detailId);};
+/* 이 일정으로 새로 만들기: 폼을 새 일정으로 열고 제목·시간·내용·특이사항만 채움(날짜는 현재 선택 유지, 상태·결과 복사 안 함) */
+$("edClone").onclick=()=>{
+  const ev=_detailId&&evById(_detailId);if(!ev)return;
+  hideDetail();
+  if(history.state&&history.state.ev==="detail")history.replaceState({tab:"tabCal",ev:"form"},"");else history.pushState({tab:"tabCal",ev:"form"},"");
+  showForm(null);prefillForm(ev);toast("불러왔어요. 고쳐서 저장하면 새 일정이 돼요");
+};
+function prefillForm(src){
+  $("evTitle").value=src.title||"";$("evTime").value=src.time||"";$("evDesc").value=src.desc||"";$("evNote").value=src.note||"";
+}
+/* ---- 지난 일정 불러오기 (제목 기준 중복 제거, 최근순, 검색) ---- */
+let _histList=null,_histAt=0,_pickList=[];
+async function loadHist(){
+  if(!me||!fb||!M.getDocs)return;
+  if(_histList&&Date.now()-_histAt<300000)return;
+  try{
+    const q=M.query(M.collection(fb.db,"events"),M.where("date","<=",todayStr()),M.orderBy("date","desc"),M.limit(400));
+    const snap=await M.getDocs(q);_histList=snap.docs.map(d=>({id:d.id,...d.data()}));_histAt=Date.now();
+  }catch(e){console.warn("지난 일정 조회 실패",e);}
+}
+function titleKey(t){return String(t||"").replace(/\s+/g," ").trim().toLowerCase();}
+function pickCandidates(){
+  const t=todayStr(),m=new Map();
+  [...(_histList||[]),..._pastRange,...events,...upEvents].forEach(e=>{if(String(e.date||"")<=t)m.set(e.id,e);});
+  const seen=new Set(),out=[];
+  [...m.values()].sort((a,b)=>evSort(b,a)).forEach(e=>{const k=titleKey(e.title);if(!k||seen.has(k))return;seen.add(k);out.push(e);});
+  return out;
+}
+function renderPick(){
+  const q=titleKey($("pickQ").value);
+  _pickList=pickCandidates().filter(e=>!q||titleKey(e.title).includes(q)||titleKey(e.desc).includes(q));
+  $("pickBody").innerHTML=_pickList.length?_pickList.slice(0,80).map((e,i)=>{
+    const sub=[fmtMD(e.date)+" 마지막",e.time,(e.desc||"").trim().split("\n")[0]].filter(Boolean).join(" · ");
+    return `<button type="button" class="pick-row" data-pick="${i}"><div class="pt">${esc(e.title)}</div><div class="ps">${esc(sub)}</div></button>`;}).join("")
+    :`<div class="empty-note">${_histList?(q?"찾는 일정이 없어요":"불러올 지난 일정이 없어요"):"불러오는 중…"}</div>`;
+}
+$("btnLoadPast").onclick=async()=>{
+  $("pickQ").value="";renderPick();openSheet2("evPickSheet");
+  await loadHist();if(_sheet2==="evPickSheet")renderPick();
+};
+$("pickQ").addEventListener("input",renderPick);
+$("pickBody").addEventListener("click",e=>{
+  const b=e.target.closest("[data-pick]");if(!b)return;
+  const src=_pickList[+b.dataset.pick];if(!src)return;
+  hideSheet2();
+  if(history.state&&history.state.ev==="sheet")history.replaceState({tab:"tabCal",ev:"form"},"");
+  prefillForm(src);toast("불러왔어요. 고쳐서 저장하면 새 일정이 돼요");
+  $("calScroll").scrollTop=0;
+});
+$("pickClose").onclick=()=>closeSheet2();
 
 /* ---- 입력 폼: 달력 바로 아래, 열린 동안 위 달력이 날짜 선택기 ---- */
 function renderDateSum(){
@@ -1774,6 +1909,7 @@ function showForm(ev){
     _evtDate=_selDate;
     $("evTitle").value="";$("evTime").value="";$("evDesc").value="";$("evNote").value="";
   }
+  $("btnLoadPast").style.display=ev?"none":"";
   $("evtFormTitle").textContent=ev?"일정 수정":"일정 추가";
   $("evSave").textContent=ev?"수정하기":"일정 저장";
   $("evDelete").style.display=ev&&canEditPost(ev)?"block":"none";
@@ -1829,12 +1965,18 @@ $("evDelete").onclick=()=>{if(curEvent)deleteEvent(curEvent.id);};
 function openSheet2(id){_sheet2=id;openOv(id);history.pushState({tab:"tabCal",ev:"sheet"},"");}
 function hideSheet2(){if(_sheet2){closeOv(_sheet2);_sheet2=null;}}
 function closeSheet2(){if(!_sheet2)return;hideSheet2();evBackIf("sheet");}
+let _listIds=[];
+function renderEvList(){
+  if(_sheet2!=="evListSheet")return;
+  const rows=_listIds.map(evById).filter(Boolean);
+  $("evListBody").innerHTML=rows.length?rows.map(e=>evtCard(e,"past",true)).join(""):'<div class="empty-note">처리할 일정이 없어요</div>';
+}
 $("calAlert").onclick=()=>{
   const l=missingList();if(!l.length)return;
-  $("evListBody").innerHTML=l.map(e=>evtCard(e,"past",true)).join("");
-  openSheet2("evListSheet");
+  _listIds=l.map(e=>e.id);openSheet2("evListSheet");renderEvList();
 };
 $("evListBody").addEventListener("click",ev=>{
+  if(actClick(ev))return;
   const c=ev.target.closest("[data-ev]");if(!c)return;
   const id=c.dataset.ev;hideSheet2();
   if(history.state&&history.state.ev==="sheet")history.replaceState({tab:"tabCal"},"");
@@ -1970,7 +2112,7 @@ document.addEventListener("visibilitychange",()=>{
    ============================================================ */
 function openOv(id){$(id).classList.add("on");}
 function closeOv(id){$(id).classList.remove("on");}
-document.querySelectorAll(".overlay").forEach(o=>o.onclick=e=>{if(e.target!==o)return;if(o.id==="eventDetailSheet")closeDetail();else if(o.id==="evListSheet"||o.id==="evMonthSheet")closeSheet2();else o.classList.remove("on");});
+document.querySelectorAll(".overlay").forEach(o=>o.onclick=e=>{if(e.target!==o)return;if(o.id==="eventDetailSheet")closeDetail();else if(o.id==="evListSheet"||o.id==="evMonthSheet"||o.id==="evPickSheet")closeSheet2();else o.classList.remove("on");});
 
 /* ============================================================
    서버 설정
