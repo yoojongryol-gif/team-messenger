@@ -845,7 +845,7 @@ let unsubSelf = null;     // 내 users 문서 감시(내보내기 즉시 반영)
 /* ---------- 관리자 모드 (2026-11-06) ----------
    관리자 = 사장님 계정 1개, UID로 판정(별도 로그인 화면 없음). 아래 값은 firestore.rules isAdmin()과 같은 자리표시자 → 실제 UID로 한 번에 치환.
    화면 판정은 버튼 노출용일 뿐, 실제 권한은 서버 규칙(isAdmin)이 막는다. */
-const ADMIN_UID = "__ADMIN_UID__";
+const ADMIN_UID = "fT79LQ6LiGhQZmvWVeIvxzcBUOD2";
 function isAdmin(){return !!me&&me.uid===ADMIN_UID;}
 function canEditPost(p){return !!me&&!!p&&(p.author===me.uid||isAdmin());} // 일정·공지 수정·삭제 버튼 노출 기준
 function activeUsers(){return allUsers.filter(u=>!u.disabled);}            // 내보낸 회원은 주소록·대화상대에서 제외

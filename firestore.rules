@@ -11,7 +11,7 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('disabled', false) != true;
     }
     // 관리자 = 사장님 계정 1개 (UID 기준). 자리표시자는 index.html의 ADMIN_UID와 같은 값으로 한 번에 치환한다.
-    function isAdmin() { return request.auth != null && request.auth.uid == '__ADMIN_UID__'; }
+    function isAdmin() { return request.auth != null && request.auth.uid == 'fT79LQ6LiGhQZmvWVeIvxzcBUOD2'; }
     // 초대 코드 해시 (원문 코드는 여기에도, 앱에도, 저장소에도 없음 — 해시만 존재. 원문은 저장소 밖 보관)
     // 바꾸려면: printf '%s' 'teamtalk-invite|새코드(소문자)' | openssl dgst -sha256  → 아래 값 교체 후 콘솔 게시
     // 바꿔도 기존 회원은 영향 없음(가입 때만 검사, 이후 update는 '기존 해시 그대로'만 확인)
