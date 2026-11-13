@@ -7,17 +7,17 @@
 <meta name="description" content="우리 팀 전용 업무 메신저 — 채팅·공지·조직도·일정">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="팀톡">
+<meta name="apple-mobile-web-app-title" content="시스템톡">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<title>팀톡 — 업무용 메신저</title>
+<title>시스템톡 — 업무용 메신저</title>
 <style>
 :root{
   /* 2026-11-01 품질수리 7호: 차가운 네이비 → 따뜻한 갈색 다크 바탕, 악센트는 블루 1색 유지 */
   --bg:#15120f; --panel:#1e1a16; --panel2:#29231d; --line:#3a3129;
   --text:#f2ede6; --muted:#a99d8e; --accent:#3ddc84; --accent2:#2bb673; --on-accent:#0f1a12;
-  --accent-soft:rgba(61,220,132,.18); --mine:#3ddc84; --theirs:#2c251f; --ok:#22c55e; --danger:#ef4444;
+  --accent-soft:rgba(61,220,132,.18); --accent-glow:rgba(61,220,132,.4); --mine:#3ddc84; --theirs:#2c251f; --ok:#22c55e; --danger:#ef4444;
   --st-planned:#9a8f80; --st-doing:#b69cff; --st-done:#22c55e; --st-cancel:#7a6f62; --st-warn:#f59e0b; --warn-soft:rgba(245,158,11,.14);
   --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
 }
@@ -44,8 +44,8 @@ input,textarea{font-family:inherit;font-size:16px}
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .room{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line)}
 .room:active{background:var(--panel)}
-.avatar{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#3ddc84,#1f9e5a);
-  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0;color:#0f1a12;position:relative}
+.avatar{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0;color:var(--on-accent);position:relative}
 .avatar.group{background:linear-gradient(135deg,#10b981,#0891b2)}
 .room-mid{flex:1;min-width:0}
 .room-name{font-weight:600;display:flex;align-items:center;gap:6px}
@@ -91,7 +91,7 @@ input,textarea{font-family:inherit;font-size:16px}
 
 /* ===== FAB ===== */
 .fab{position:absolute;right:18px;bottom:calc(22px + var(--safe-b));width:56px;height:56px;border-radius:50%;
-  background:var(--accent);border:none;color:var(--on-accent);font-size:26px;box-shadow:0 6px 20px rgba(61,220,132,.4);z-index:20}
+  background:var(--accent);border:none;color:var(--on-accent);font-size:26px;box-shadow:0 6px 20px var(--accent-glow);z-index:20}
 
 /* ===== 오버레이/시트 ===== */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;align-items:flex-end;justify-content:center}
@@ -119,7 +119,7 @@ input,textarea{font-family:inherit;font-size:16px}
 /* ===== 로그인 ===== */
 #authScreen{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;flex-direction:column;
   align-items:center;justify-content:center;padding:30px;text-align:center}
-#authScreen .logo{font-size:54px;margin-bottom:8px}
+#authScreen .logo{width:84px;height:84px;border-radius:22px;object-fit:cover;margin-bottom:14px;background:var(--panel);box-shadow:0 8px 24px #0006}
 #authScreen h1{font-size:24px;margin:0 0 4px}
 #authScreen p{color:var(--muted);margin:0 0 26px}
 #authBox{width:100%;max-width:340px}
@@ -361,15 +361,39 @@ input,textarea{font-family:inherit;font-size:16px}
 .docx-html td,.docx-html th{border:1px solid #ccc;padding:4px 8px}
 .docx-html h1,.docx-html h2,.docx-html h3{line-height:1.35}
 .doc-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#888;font-size:14px}
+/* 앱 설정 시트 (관리자, 2026-11-13 시스템톡) */
+.ac-prev{background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:16px;text-align:center;margin-bottom:16px}
+.ac-prev img{width:56px;height:56px;border-radius:15px;object-fit:cover;background:var(--panel)}
+.ac-prev .pn{font-weight:700;font-size:18px;margin-top:6px;word-break:break-all}
+.ac-prev .pt{color:var(--muted);font-size:13px;margin-top:2px;min-height:18px;word-break:break-all}
+.ac-prev .pb{margin-top:12px;background:var(--accent);color:var(--on-accent);border-radius:12px;padding:11px;font-weight:700;font-size:15px}
+.ac-prev .pm{display:flex;justify-content:flex-end;margin-top:10px}
+.ac-prev .pm span{background:var(--mine);color:var(--on-accent);padding:8px 12px;border-radius:16px 16px 5px 16px;font-size:14px}
+.ac-prev .pc{font-size:11px;color:var(--muted);margin-top:8px}
+.ac-lbl{font-size:12px;color:var(--muted);margin:0 2px 6px;text-align:left}
+.ac-cnt{float:right;font-size:12px;color:var(--muted)}
+.ac-logo{display:flex;align-items:center;gap:12px}
+.ac-logo img{width:64px;height:64px;border-radius:16px;object-fit:cover;border:1px solid var(--line);flex:none;background:var(--bg)}
+.ac-logo .bt{display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}
+.ac-sbtn{min-height:44px;border-radius:11px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:14px;font-weight:600;padding:0 12px}
+.ac-sbtn:active{opacity:.8}
+.ac-chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ac-chip{min-height:48px;display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:12px;border:2px solid var(--line);background:var(--panel2);color:var(--text);font-size:14px;font-weight:600;text-align:left}
+.ac-chip .sw{width:26px;height:26px;border-radius:50%;background:var(--c);color:var(--oc);flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.ac-chip .cr{margin-left:auto;font-size:11px;color:var(--muted);font-weight:500;white-space:nowrap}
+.ac-chip.on{border-color:var(--c);background:var(--panel)}
+.ac-note{font-size:12px;color:var(--muted);line-height:1.6;background:var(--panel2);border-radius:10px;padding:10px 12px;margin:2px 0 6px}
+.ac-msg{font-size:13px;min-height:18px;margin-top:10px;color:var(--muted)}
+.ac-msg.err{color:var(--danger)}
 </style>
 </head>
 <body>
 
 <!-- 로그인 -->
 <div id="authScreen">
-  <div class="logo">💬</div>
-  <h1>팀톡</h1>
-  <p>우리 팀 전용 메신저</p>
+  <img class="logo" id="authLogo" src="icon-192.png" alt="" width="84" height="84">
+  <h1 id="authName">시스템톡</h1>
+  <p id="authTagline">우리 팀 전용 메신저</p>
   <div id="authBox">
     <div class="field" id="nameField" style="display:none"><label>이름</label><input id="aName" placeholder="홍길동" autocomplete="name"></div>
     <div class="field"><label>이메일</label><input id="aEmail" type="email" placeholder="you@company.com" autocomplete="username"></div>
@@ -382,6 +406,66 @@ input,textarea{font-family:inherit;font-size:16px}
   </div>
   <button class="linkbtn" id="cfgBtn" style="position:absolute;bottom:calc(20px + var(--safe-b));color:var(--muted)">⚙️ 서버 설정</button>
 </div>
+<script>
+/* ---------- 앱 설정 적용기 (2026-11-13 시스템톡) ----------
+   이름·로그인 로고·강조색·로그인 문구. 원본 = Firestore appConfig/main(관리자만 저장, 읽기 공개),
+   캐시 = localStorage tt.appcfg → 다음 실행 때 로그인 전 화면에도 즉시 적용. module보다 먼저 돌아 기본값 깜빡임을 막는다.
+   강조색 위 글자색(--on-accent)은 대비 4.5:1 이상이 되도록 자동 선택(필요하면 강조색을 살짝 밝힘). */
+(function(){
+  var DEF={name:"시스템톡",tagline:"우리 팀 전용 메신저",accent:"#3ddc84",logo:""};
+  var PRESETS=[{label:"초록",accent:"#3ddc84"},{label:"하늘",accent:"#38bdf8"},{label:"보라",accent:"#a78bfa"},{label:"주황",accent:"#fb923c"}];
+  var CKEY="tt.appcfg", HEX=/^#[0-9a-fA-F]{6}$/, LOGO=/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/;
+  var BLACK=[11,11,11], WHITE=[255,255,255];
+  function rgb(h){h=h.slice(1);return [0,2,4].map(function(i){return parseInt(h.substr(i,2),16);});}
+  function hex(c){return "#"+c.map(function(v){v=Math.max(0,Math.min(255,Math.round(v)));return (v<16?"0":"")+v.toString(16);}).join("");}
+  function lum(c){var a=c.map(function(v){v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);});return 0.2126*a[0]+0.7152*a[1]+0.0722*a[2];}
+  function cr(x,y){var a=lum(x),b=lum(y);return (Math.max(a,b)+0.05)/(Math.min(a,b)+0.05);}
+  function mix(c,t,p){return c.map(function(v,i){return v+(t[i]-v)*p;});}
+  function derive(h){
+    h=String(h||DEF.accent).toLowerCase();
+    if(h==="#3ddc84")return {accent:h,accent2:"#2bb673",on:"#0f1a12",rgb:[61,220,132]}; // 기존 초록 그대로(대비 10:1)
+    var a=rgb(h), on=mix(BLACK,a,0.1), n=0;
+    if(cr(WHITE,a)>=4.5&&cr(WHITE,a)>=cr(on,a)){on=WHITE;}
+    else{while(cr(on,a)<4.5&&n<40){a=mix(a,WHITE,0.05);on=mix(BLACK,a,0.1);n++;}}
+    var f=0.18,a2=mix(a,BLACK,f);
+    while(cr(on,a2)<4.5&&f>0){f=Math.max(0,f-0.02);a2=mix(a,BLACK,f);}
+    return {accent:hex(a),accent2:hex(a2),on:hex(on),rgb:a.map(Math.round)};
+  }
+  function norm(d){
+    d=d||{};
+    var name=typeof d.name==="string"?d.name.trim().slice(0,20):"";
+    return {
+      name:name||DEF.name,
+      tagline:typeof d.tagline==="string"?d.tagline.trim().slice(0,40):DEF.tagline,
+      accent:HEX.test(d.accent||"")?d.accent.toLowerCase():DEF.accent,
+      logo:(typeof d.logo==="string"&&d.logo.length<=200000&&LOGO.test(d.logo))?d.logo:""
+    };
+  }
+  function setVars(el,c){
+    var d=derive(c.accent),r=d.rgb.join(","),s=el.style;
+    s.setProperty("--accent",d.accent);s.setProperty("--mine",d.accent);s.setProperty("--accent2",d.accent2);
+    s.setProperty("--on-accent",d.on);s.setProperty("--accent-soft","rgba("+r+",.18)");s.setProperty("--accent-glow","rgba("+r+",.4)");
+    return d;
+  }
+  var cur=norm(null);
+  function apply(raw,save){
+    var c=norm(raw),g=function(id){return document.getElementById(id);};cur=c;
+    setVars(document.documentElement,c);
+    if(g("authName"))g("authName").textContent=c.name;
+    if(g("authTagline")){g("authTagline").textContent=c.tagline;g("authTagline").hidden=!c.tagline;}
+    if(g("authLogo")&&g("authLogo").getAttribute("src")!==(c.logo||"icon-192.png"))g("authLogo").src=c.logo||"icon-192.png";
+    Array.prototype.forEach.call(document.querySelectorAll(".appName"),function(e){e.textContent=c.name;});
+    document.title=c.name+" — 업무용 메신저";
+    if(g("verLabel")&&window.TT_APP_VER)g("verLabel").textContent=c.name+" v"+window.TT_APP_VER;
+    if(save){try{if(raw)localStorage.setItem(CKEY,JSON.stringify(c));else localStorage.removeItem(CKEY);}catch(e){}}
+    return c;
+  }
+  var cached=null;try{cached=JSON.parse(localStorage.getItem(CKEY)||"null");}catch(e){}
+  window.TTCFG={DEF:DEF,PRESETS:PRESETS,derive:derive,norm:norm,setVars:setVars,apply:apply,
+    ratio:function(x,y){return cr(rgb(x),rgb(y));},cur:function(){return cur;}};
+  apply(cached,false);
+})();
+</script>
 
 <!-- 잠금 -->
 <div id="lockScreen">
@@ -400,7 +484,7 @@ input,textarea{font-family:inherit;font-size:16px}
     <!-- 💬 채팅 탭 -->
     <div class="tabpanel" id="tabChat">
       <div class="topbar">
-        <div class="title">팀톡 <span class="sub" id="meLabel"></span><span class="adminTag" id="adminTag" hidden>관리자</span></div>
+        <div class="title"><span class="appName">시스템톡</span> <span class="sub" id="meLabel"></span><span class="adminTag" id="adminTag" hidden>관리자</span></div>
         <button class="iconbtn" id="menuBtn">⋮</button>
       </div>
       <div class="scroll" id="roomList"></div>
@@ -502,6 +586,7 @@ input,textarea{font-family:inherit;font-size:16px}
     <div class="menu-item" id="mNotify"><span class="ic">🔔</span><span id="mNotifyLabel">알림 켜기</span></div>
     <div class="menu-item" id="mProfile"><span class="ic">✏️</span>이름 변경</div>
     <div class="menu-item" id="mMembers" style="display:none"><span class="ic">👥</span>회원 관리<span class="adminTag">관리자</span></div>
+    <div class="menu-item" id="mAppCfg" style="display:none"><span class="ic">🎨</span>앱 설정<span class="adminTag">관리자</span></div>
     <div class="menu-item" id="mLogout"><span class="ic">🚪</span>로그아웃</div>
     <div class="menu-item" id="mFault"><span class="ic">🧪</span><span id="faultLbl">저장 실패 테스트(FAULT): 꺼짐</span></div>
     <div class="menu-item" id="mVer" style="color:var(--muted);font-size:13px;border:none"><span class="ic">ℹ️</span><span id="verLabel"></span></div>
@@ -623,6 +708,41 @@ input,textarea{font-family:inherit;font-size:16px}
   </div>
 </div>
 
+<!-- 앱 설정 시트 (관리자만, 2026-11-13 시스템톡): 이름·로그인 로고·강조색·로그인 문구 → appConfig/main -->
+<div class="overlay" id="appCfgSheet">
+  <div class="sheet">
+    <h3>앱 설정<span class="adminTag">관리자</span></h3>
+    <div class="ac-lbl">미리보기 (저장 전에는 이 상자에만 보여요)</div>
+    <div class="ac-prev" id="acPrev">
+      <img id="acPrevLogo" src="icon-192.png" alt="">
+      <div class="pn" id="acPrevName"></div>
+      <div class="pt" id="acPrevTag"></div>
+      <div class="pb">로그인</div>
+      <div class="pm"><span>보낸 메시지 예시</span></div>
+      <div class="pc" id="acPrevCr"></div>
+    </div>
+    <div class="field"><label for="acName">앱 이름 <span class="ac-cnt" id="acNameCnt"></span></label><input id="acName" maxlength="20" placeholder="시스템톡" autocomplete="off"></div>
+    <div class="field"><label>로그인 화면 로고</label>
+      <div class="ac-logo">
+        <img id="acLogoImg" src="icon-192.png" alt="">
+        <div class="bt">
+          <button type="button" class="ac-sbtn" id="acLogoPick">사진 고르기</button>
+          <button type="button" class="ac-sbtn" id="acLogoReset">기본 아이콘으로</button>
+        </div>
+      </div>
+      <div class="hint" id="acLogoInfo">정사각형으로 잘라 256px로 줄여 저장해요(최대 150KB).</div>
+      <input type="file" id="acLogoFile" accept="image/png,image/jpeg,image/webp,image/*" hidden>
+    </div>
+    <div class="field"><label>강조색</label><div class="ac-chips" id="acChips"></div>
+      <div class="hint">버튼 글자색은 읽기 쉬운 대비(4.5:1 이상)로 자동으로 맞춰요.</div></div>
+    <div class="field"><label for="acTag">로그인 화면 문구 <span class="ac-cnt" id="acTagCnt"></span></label><input id="acTag" maxlength="40" placeholder="우리 팀 전용 메신저" autocomplete="off"></div>
+    <div class="ac-note">홈 화면 아이콘 아래 이름은 앱 설치 정보(manifest)에 '시스템톡'으로 고정돼 있어 여기서 바꿔도 바뀌지 않아요. 앱 안 화면·로그인 화면·브라우저 탭 제목에 적용돼요.</div>
+    <button class="btn" id="acSave">저장</button>
+    <button class="btn ghost" id="acDefault" style="margin-top:8px">기본값으로</button>
+    <div class="ac-msg" id="acMsg" role="status" aria-live="polite"></div>
+  </div>
+</div>
+
 <!-- 프로필 시트 (이름·부서·직급·연락처) -->
 <div class="overlay" id="profileSheet">
   <div class="sheet">
@@ -669,9 +789,9 @@ input,textarea{font-family:inherit;font-size:16px}
 
 <script type="module">
 /* ============================================================
-   팀톡 — 업무용 메신저 (Firebase)
+   시스템톡(구 팀톡) — 업무용 메신저 (Firebase). 내부 변수·저장소·URL은 teamtalk 그대로
    ============================================================ */
-const APP_VER = "2026.11.12c"; // 2026-11-12b 폰 아이콘을 AI 뇌 로고 이미지로 교체. 2026-11-12a 아이콘 교체+강조색 파랑→초록(#3ddc84) 통일.  sw.js의 VER("teamtalk-"+APP_VER)과 반드시 함께 올린다. 2026-11-11b 안내문 이모지 글리프가 닫기 버튼처럼 보이던 문제 수정. 2026-11-11 지난 일정 불러오기·이 일정으로 새로 만들기+결과 원탭(완료·취소·되돌리기·한 줄 메모). 2026-11-10 일정 상태(예정·진행중·완료·취소)+실행 내용·결과 기록+결과 미기록 알림+이 달 정리. 2026-11-06 관리자 모드(UID 1개·남의 글 수정삭제·회원 내보내기·초대코드 교체). 2026-11-05 일정 화면 5959식 개편+특이사항(note). 2026-11-01 품질수리 7호(실패패널·FAULT·뒤로가기·따뜻한 바탕). 이전 1.0.1=파일뷰어 CORS 수리
+const APP_VER = "2026.11.13a"; // 2026-11-13a 이름 팀톡→시스템톡 + 관리자 앱 설정(이름·로그인 로고·강조색 프리셋·로그인 문구, Firestore appConfig/main). 2026-11-12b 폰 아이콘을 AI 뇌 로고 이미지로 교체. 2026-11-12a 아이콘 교체+강조색 파랑→초록(#3ddc84) 통일.  sw.js의 VER("teamtalk-"+APP_VER)과 반드시 함께 올린다. 2026-11-11b 안내문 이모지 글리프가 닫기 버튼처럼 보이던 문제 수정. 2026-11-11 지난 일정 불러오기·이 일정으로 새로 만들기+결과 원탭(완료·취소·되돌리기·한 줄 메모). 2026-11-10 일정 상태(예정·진행중·완료·취소)+실행 내용·결과 기록+결과 미기록 알림+이 달 정리. 2026-11-06 관리자 모드(UID 1개·남의 글 수정삭제·회원 내보내기·초대코드 교체). 2026-11-05 일정 화면 5959식 개편+특이사항(note). 2026-11-01 품질수리 7호(실패패널·FAULT·뒤로가기·따뜻한 바탕). 이전 1.0.1=파일뷰어 CORS 수리
 
 /* ---------- Firebase 설정 (teamtalk-efb25 프로젝트, 2026-06-18 연결) ----------
    웹 설정값은 비밀이 아니라 공개용 — 보안은 firestore.rules/storage.rules로 처리 */
@@ -765,6 +885,90 @@ async function guardWrite(what,fn,hint){
   }
 }
 function toast(t){if(_fail)return;const e=$("toast");e.textContent=t;e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),2200);}
+
+/* ---------- 앱 설정 (2026-11-13 시스템톡, 관리자 전용 편집) ----------
+   적용기는 로그인 화면 아래 클래식 스크립트(window.TTCFG). 여기서는 Firestore 구독 + 설정 시트만.
+   문서 없음 = 기본값(시스템톡·icon-192·초록·"우리 팀 전용 메신저"). 실제 쓰기 권한은 firestore.rules appConfig가 막는다. */
+const AC=window.TTCFG;window.TT_APP_VER=APP_VER;
+function appName(){return AC.cur().name;}
+let unsubAppCfg=null,acDraft=null,acDirty=false;
+function watchAppConfig(){
+  if(unsubAppCfg)unsubAppCfg();
+  unsubAppCfg=M.onSnapshot(M.doc(fb.db,"appConfig","main"),s=>{
+    AC.apply(s.exists()?s.data():null,true);
+    if($("appCfgSheet").classList.contains("on")&&!acDirty)acFill(AC.cur());
+  },e=>console.warn("앱 설정 구독 중단 — 캐시/기본값 사용",e&&e.code));
+}
+function acMsg(t,err){const m=$("acMsg");m.textContent=t||"";m.classList.toggle("err",!!err);}
+function acFill(c){
+  acDraft={...c};acDirty=false;
+  $("acName").value=c.name;$("acTag").value=c.tagline;
+  acRender();acMsg("");
+}
+function acRender(){
+  const d=acDraft,pv=$("acPrev");
+  const dv=AC.setVars(pv,d);
+  $("acPrevLogo").src=$("acLogoImg").src=d.logo||"icon-192.png";
+  $("acPrevName").textContent=d.name||AC.DEF.name;
+  $("acPrevTag").textContent=d.tagline;
+  $("acPrevCr").textContent="버튼 글자 대비 "+AC.ratio(dv.on,dv.accent).toFixed(1)+":1";
+  $("acNameCnt").textContent=($("acName").value.length)+"/20";
+  $("acTagCnt").textContent=($("acTag").value.length)+"/40";
+  $("acLogoInfo").textContent=d.logo?`올린 로고 · ${Math.round(d.logo.length/1024)}KB (정사각 256px)`:"기본 아이콘 사용 중 · 사진을 고르면 정사각형으로 잘라 256px로 줄여요(최대 150KB).";
+  const list=AC.PRESETS.slice();
+  if(!list.some(p=>p.accent===d.accent))list.push({label:"지금 색",accent:d.accent});
+  $("acChips").innerHTML=list.map(p=>{
+    const v=AC.derive(p.accent),on=p.accent===d.accent;
+    return `<button type="button" class="ac-chip${on?" on":""}" data-acc="${p.accent}" aria-pressed="${on}" style="--c:${v.accent};--oc:${v.on}"><span class="sw">${on?"✓":""}</span>${p.label}<span class="cr">${AC.ratio(v.on,v.accent).toFixed(1)}:1</span></button>`;
+  }).join("");
+}
+$("acChips").onclick=e=>{const b=e.target.closest(".ac-chip");if(!b)return;acDraft.accent=b.dataset.acc;acDirty=true;acRender();};
+$("acName").oninput=()=>{acDraft.name=$("acName").value.trim();acDirty=true;acRender();};
+$("acTag").oninput=()=>{acDraft.tagline=$("acTag").value.trim();acDirty=true;acRender();};
+$("acLogoPick").onclick=()=>$("acLogoFile").click();
+$("acLogoReset").onclick=()=>{acDraft.logo="";acDirty=true;acRender();};
+$("acLogoFile").onchange=async()=>{
+  const f=$("acLogoFile").files[0];$("acLogoFile").value="";if(!f)return;
+  acMsg("사진을 줄이는 중…");
+  try{acDraft.logo=await acMakeLogo(f);acDirty=true;acRender();acMsg("로고를 바꿨어요 — 저장을 눌러야 모두에게 적용돼요");}
+  catch(e){console.warn("로고 처리 실패",e);acMsg("로고를 넣지 못했어요: "+((e&&e.message)||"알 수 없는 오류"),true);}
+};
+/* 업로드 이미지 → 가운데 정사각 잘라 256px → data URL ≤150KB (webp 우선, 안 되면 png, 그래도 크면 jpeg를 어두운 바탕에) */
+async function acMakeLogo(file){
+  if(!/^image\//.test(file.type||""))throw new Error("이미지 파일이 아니에요");
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error("이 형식의 사진은 열 수 없어요(PNG·JPG로 다시 시도)"));i.src=url;});
+    const S=256,cv=document.createElement("canvas");cv.width=cv.height=S;const g=cv.getContext("2d");
+    const side=Math.min(img.naturalWidth,img.naturalHeight);if(!side)throw new Error("사진 크기를 읽을 수 없어요");
+    const sx=(img.naturalWidth-side)/2,sy=(img.naturalHeight-side)/2;
+    const draw=bg=>{g.clearRect(0,0,S,S);if(bg){g.fillStyle=bg;g.fillRect(0,0,S,S);}g.imageSmoothingQuality="high";g.drawImage(img,sx,sy,side,side,0,0,S,S);};
+    const LIMIT=150000;draw(null);
+    for(const q of [0.92,0.85,0.75,0.6,0.45]){const d=cv.toDataURL("image/webp",q);if(!d.startsWith("data:image/webp"))break;if(d.length<=LIMIT)return d;}
+    const png=cv.toDataURL("image/png");if(png.length<=LIMIT)return png;
+    draw("#15120f");
+    for(const q of [0.9,0.8,0.7,0.55,0.4,0.3]){const d=cv.toDataURL("image/jpeg",q);if(d.length<=LIMIT)return d;}
+    throw new Error("사진을 150KB 이하로 줄이지 못했어요");
+  }finally{URL.revokeObjectURL(url);}
+}
+$("acDefault").onclick=()=>{
+  acDraft={...AC.DEF};acDirty=true;$("acName").value=acDraft.name;$("acTag").value=acDraft.tagline;acRender();
+  acMsg("기본값을 채웠어요 — 저장을 눌러야 모두에게 적용돼요");
+};
+$("acSave").onclick=async()=>{
+  if(!isAdmin()||!fb.db)return;
+  const name=$("acName").value.trim(),tagline=$("acTag").value.trim();
+  if(!name){acMsg("앱 이름을 입력하세요",true);$("acName").focus();return;}
+  if(name.length>20||tagline.length>40){acMsg("이름은 20자, 문구는 40자까지예요",true);return;}
+  const data={name,tagline,accent:acDraft.accent,logo:acDraft.logo||"",updatedAt:M.serverTimestamp(),updatedBy:me.uid};
+  $("acSave").disabled=true;acMsg("저장 중…");
+  const ok=await guardWrite("앱 설정 저장",async()=>{await M.setDoc(M.doc(fb.db,"appConfig","main"),data);},
+    "저장되지 않았어요. 서버 규칙(appConfig)이 아직 배포 전이면 권한 오류가 나요.");
+  $("acSave").disabled=false;
+  if(ok){acDirty=false;acMsg("저장했어요 — 모든 팀원 화면에 바로 반영돼요");toast("앱 설정을 저장했어요");}
+  else acMsg("저장하지 못했어요 — 화면 아래 안내에서 원인을 확인하세요",true);
+};
+$("mAppCfg").onclick=()=>{if(!isAdmin())return;closeOv("menuSheet");acFill(AC.cur());openOv("appCfgSheet");};
 function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function initials(n){return (n||"?").trim().slice(0,2);}
 function fmtTime(ts){if(!ts)return"";const d=ts.toDate?ts.toDate():new Date(ts);let h=d.getHours(),m=d.getMinutes();const ap=h<12?"오전":"오후";h=h%12||12;return `${ap} ${h}:${String(m).padStart(2,"0")}`;}
@@ -860,7 +1064,7 @@ async function onLogin(user){
   $("authScreen").style.display="none";
   $("app").classList.remove("hidden");
   $("meLabel").textContent="· "+me.name;
-  $("adminTag").hidden=!isAdmin();$("mMembers").style.display=isAdmin()?"":"none";
+  $("adminTag").hidden=!isAdmin();$("mMembers").style.display=isAdmin()?"":"none";$("mAppCfg").style.display=isAdmin()?"":"none";
   if(lockIsOn()) showLock();
   watchSelf();
   watchUsers();
@@ -870,7 +1074,7 @@ async function onLogin(user){
   switchTab("tabChat");
   renderEventsMonth();
   renderNotifUI();renderLockUI();
-  $("verLabel").textContent="팀톡 v"+APP_VER;
+  $("verLabel").textContent=appName()+" v"+APP_VER;
 }
 
 /* ============================================================
@@ -1060,7 +1264,7 @@ async function openFile(url,name){
     load.style.display="flex";
     const msg=String((err&&err.message)||err||"");
     const corsLike=/fetch|network|cors/i.test(msg);
-    load.innerHTML=`<div style="text-align:center;color:#bbb">미리보기를 열 수 없어요.${corsLike?'<br><span style="font-size:12px;color:#888">(이 형식은 브라우저에서 바로 열람하기 어려울 수 있어요)</span>':''}<br><button id="dlBtn" style="margin-top:12px;padding:9px 18px;border:none;border-radius:8px;background:#3ddc84;color:#0f1a12;font-size:14px">다운로드해서 열기</button></div>`;
+    load.innerHTML=`<div style="text-align:center;color:#bbb">미리보기를 열 수 없어요.${corsLike?'<br><span style="font-size:12px;color:#888">(이 형식은 브라우저에서 바로 열람하기 어려울 수 있어요)</span>':''}<br><button id="dlBtn" style="margin-top:12px;padding:9px 18px;border:none;border-radius:8px;background:var(--accent);color:var(--on-accent);font-size:14px">다운로드해서 열기</button></div>`;
     $("dlBtn").onclick=()=>window.open(url,"_blank","noopener");
   }
 }
@@ -1292,7 +1496,7 @@ async function registerPush(){
     }
     msgMod.onMessage(fb.msg,p=>{
       const n=p.notification||{};
-      if(document.hidden&&Notification.permission==="granted") new Notification(n.title||"새 메시지",{body:n.body,icon:"apple-touch-icon.png"});
+      if(document.hidden&&Notification.permission==="granted") new Notification(n.title||appName(),{body:n.body,icon:"apple-touch-icon.png"});
     });
   }catch(e){console.warn("push init",e);}
 }
@@ -1988,7 +2192,7 @@ function oneLine(t){return String(t||"").replace(/\s*\n+\s*/g," / ").trim();}
 function monthRows(){return events.filter(e=>String(e.date||"").slice(0,7)===_evKey).sort(evSort);}
 function monthText(rows){
   const y=calYM.getFullYear(),m=calYM.getMonth()+1;
-  const lines=[`[팀톡 일정 정리] ${y}년 ${m}월 (${rows.length}건)`];
+  const lines=[`[${appName()} 일정 정리] ${y}년 ${m}월 (${rows.length}건)`];
   rows.forEach(e=>{
     const d=ymdParts(e.date),k=evStKey(e),res=oneLine(e.result);
     lines.push(`${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]}) ${e.title} | ${ST_LABEL[k]}${res?" | 결과: "+res:""}`);
@@ -2060,8 +2264,8 @@ async function registerBio(){
   if(!await bioAvailable()){toast("이 기기는 생체인증을 지원하지 않아요");return false;}
   try{
     const cred=await navigator.credentials.create({publicKey:{
-      challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:"팀톡"},
-      user:{id:crypto.getRandomValues(new Uint8Array(16)),name:"teamtalk-user",displayName:"팀톡"},
+      challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:"시스템톡"},
+      user:{id:crypto.getRandomValues(new Uint8Array(16)),name:"teamtalk-user",displayName:"시스템톡"},
       pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
       authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"preferred"},
       timeout:60000,attestation:"none"}});
@@ -2149,6 +2353,7 @@ async function boot(){
   }
   try{ await initFirebase(); }
   catch(e){ $("authMsg").style.color="var(--danger)";$("authMsg").textContent="Firebase 연결 실패: "+e.message;return; }
+  watchAppConfig(); // 공개 읽기 → 로그인 전 화면에도 최신 앱 설정 반영
   M.onAuthStateChanged(fb.auth,user=>{
     if(user) onLogin(user);
     else { $("app").classList.add("hidden");$("authScreen").style.display="flex";$("authBtn").disabled=false; }

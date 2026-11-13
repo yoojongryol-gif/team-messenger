@@ -1,4 +1,4 @@
-/* 팀톡 FCM 백그라운드 메시지 수신 서비스워커
+/* 시스템톡(구 팀톡) FCM 백그라운드 메시지 수신 서비스워커
    설정값은 등록 시 URL 쿼리스트링으로 전달받음 (SW는 localStorage 접근 불가) */
 importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js");
@@ -20,7 +20,7 @@ try{
     messaging.onBackgroundMessage(payload=>{
       const n = payload.notification || {};
       const d = payload.data || {};
-      self.registration.showNotification(n.title || d.title || "새 메시지", {
+      self.registration.showNotification(n.title || d.title || "시스템톡", {
         body: n.body || d.body || "",
         icon: "apple-touch-icon.png",
         badge: "apple-touch-icon.png",

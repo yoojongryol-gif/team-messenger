@@ -73,5 +73,28 @@ service cloud.firestore {
         || (isAdmin() && request.resource.data.author == resource.data.author));
       allow delete: if member() && (resource.data.author == request.auth.uid || isAdmin());
     }
+
+    // 앱 설정(시스템톡 2026-11-13): 앱 이름·로그인 로고·강조색·로그인 문구 — 문서 1개(appConfig/main)
+    // 읽기 = 공개(로그인 전 화면에도 적용해야 하므로, 민감정보 없음). 쓰기 = 관리자만(기존 isAdmin()+member() 판정 재사용).
+    // 필드 화이트리스트 + 크기 제한: 이름 1~20자, 문구 ≤40자, 색 #RRGGBB, 로고 ''(기본 아이콘) 또는 data:image ≤200000자
+    match /appConfig/{doc} {
+      allow read: if true;
+      allow create, update: if isAdmin() && member() && doc == 'main'
+        && request.resource.data.keys().hasOnly(['name', 'tagline', 'accent', 'logo', 'updatedAt', 'updatedBy'])
+        && request.resource.data.keys().hasAll(['name', 'accent'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 20
+        && request.resource.data.accent is string
+        && request.resource.data.accent.matches('^#[0-9a-fA-F]{6}$')
+        && request.resource.data.get('tagline', '') is string
+        && request.resource.data.get('tagline', '').size() <= 40
+        && request.resource.data.get('logo', '') is string
+        && request.resource.data.get('logo', '').size() <= 200000
+        && (request.resource.data.get('logo', '') == ''
+          || request.resource.data.get('logo', '').matches('^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$'))
+        && request.resource.data.get('updatedAt', request.time) is timestamp
+        && request.resource.data.get('updatedBy', request.auth.uid) == request.auth.uid;
+      allow delete: if false;
+    }
   }
 }
